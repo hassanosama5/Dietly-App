@@ -2,6 +2,7 @@ const Recommendation = require("../models/Recommendation");
 const User = require("../models/User");
 const Progress = require("../models/Progress");
 const MealPlan = require("../models/MealPlan");
+const { sendSuccess, sendError, sendPaginated } = require("../utils/responseHandler");
 
 // Helper function to generate AI recommendations based on user data
 const generateRecommendations = async (user) => {
@@ -158,18 +159,56 @@ const generateRecommendations = async (user) => {
   return recommendations;
 };
 
+// @desc    Create manual recommendation
+// @route   POST /api/v1/recommendations
+// @access  Private
+exports.createRecommendation = async (req, res) => {
+  try {
+    const {
+      type,
+      priority,
+      title,
+      description,
+      reasoning,
+      actionSteps,
+    } = req.body;
+
+    if (!type || !title || !description) {
+      return sendError(
+        res,
+        400,
+        "Please provide type, title, and description"
+      );
+    }
+
+    const recommendation = await Recommendation.create({
+      user: req.user.id,
+      type,
+      priority: priority || "medium",
+      title,
+      description,
+      reasoning,
+      actionSteps: actionSteps || [],
+      status: "active",
+      generatedBy: "manual",
+    });
+
+    return sendSuccess(res, 201, recommendation);
+  } catch (error) {
+    console.error("Create recommendation error:", error);
+    return sendError(res, 500, "Server error creating recommendation", error.message);
+  }
+};
+
 // @desc    Generate AI recommendations for user
-// @route   POST /api/recommendations/generate
+// @route   POST /api/v1/recommendations/generate-ai
 // @access  Private
 exports.generateRecommendations = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
 
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
+      return sendError(res, 404, "User not found");
     }
 
     // Generate recommendations
@@ -185,18 +224,13 @@ exports.generateRecommendations = async (req, res) => {
       )
     );
 
-    res.status(201).json({
-      success: true,
-      data: savedRecommendations,
+    return sendSuccess(res, 201, {
+      recommendations: savedRecommendations,
       count: savedRecommendations.length,
     });
   } catch (error) {
     console.error("Generate recommendations error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server error generating recommendations",
-      error: error.message,
-    });
+    return sendError(res, 500, "Server error generating recommendations", error.message);
   }
 };
 
@@ -232,23 +266,14 @@ exports.getRecommendations = async (req, res) => {
 
     const total = await Recommendation.countDocuments(query);
 
-    res.status(200).json({
-      success: true,
-      data: recommendations,
-      pagination: {
-        page: pageNum,
-        limit: limitNum,
-        total,
-        pages: Math.ceil(total / limitNum),
-      },
+    return sendPaginated(res, recommendations, {
+      page: pageNum,
+      limit: limitNum,
+      total,
     });
   } catch (error) {
     console.error("Get recommendations error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server error fetching recommendations",
-      error: error.message,
-    });
+    return sendError(res, 500, "Server error fetching recommendations", error.message);
   }
 };
 
@@ -263,23 +288,13 @@ exports.getRecommendation = async (req, res) => {
     });
 
     if (!recommendation) {
-      return res.status(404).json({
-        success: false,
-        message: "Recommendation not found",
-      });
+      return sendError(res, 404, "Recommendation not found");
     }
 
-    res.status(200).json({
-      success: true,
-      data: recommendation,
-    });
+    return sendSuccess(res, 200, recommendation);
   } catch (error) {
     console.error("Get recommendation error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server error fetching recommendation",
-      error: error.message,
-    });
+    return sendError(res, 500, "Server error fetching recommendation", error.message);
   }
 };
 
@@ -296,10 +311,7 @@ exports.updateRecommendation = async (req, res) => {
     });
 
     if (!recommendation) {
-      return res.status(404).json({
-        success: false,
-        message: "Recommendation not found",
-      });
+      return sendError(res, 404, "Recommendation not found");
     }
 
     if (status) recommendation.status = status;
@@ -312,17 +324,10 @@ exports.updateRecommendation = async (req, res) => {
     recommendation.updatedAt = Date.now();
     await recommendation.save();
 
-    res.status(200).json({
-      success: true,
-      data: recommendation,
-    });
+    return sendSuccess(res, 200, recommendation);
   } catch (error) {
     console.error("Update recommendation error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server error updating recommendation",
-      error: error.message,
-    });
+    return sendError(res, 500, "Server error updating recommendation", error.message);
   }
 };
 
@@ -339,18 +344,12 @@ exports.completeActionStep = async (req, res) => {
     });
 
     if (!recommendation) {
-      return res.status(404).json({
-        success: false,
-        message: "Recommendation not found",
-      });
+      return sendError(res, 404, "Recommendation not found");
     }
 
     const index = parseInt(stepIndex);
     if (index < 0 || index >= recommendation.actionSteps.length) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid action step index",
-      });
+      return sendError(res, 400, "Invalid action step index");
     }
 
     recommendation.actionSteps[index].completed = true;
@@ -359,17 +358,10 @@ exports.completeActionStep = async (req, res) => {
 
     await recommendation.save();
 
-    res.status(200).json({
-      success: true,
-      data: recommendation,
-    });
+    return sendSuccess(res, 200, recommendation);
   } catch (error) {
     console.error("Complete action step error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server error updating action step",
-      error: error.message,
-    });
+    return sendError(res, 500, "Server error updating action step", error.message);
   }
 };
 
@@ -385,18 +377,13 @@ exports.getActiveRecommendations = async (req, res) => {
       .sort({ priority: 1, createdAt: -1 })
       .limit(10);
 
-    res.status(200).json({
-      success: true,
-      data: recommendations,
+    return sendSuccess(res, 200, {
+      recommendations,
       count: recommendations.length,
     });
   } catch (error) {
     console.error("Get active recommendations error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server error fetching active recommendations",
-      error: error.message,
-    });
+    return sendError(res, 500, "Server error fetching active recommendations", error.message);
   }
 };
 
@@ -421,18 +408,60 @@ exports.dismissRecommendation = async (req, res) => {
     recommendation.updatedAt = Date.now();
     await recommendation.save();
 
-    res.status(200).json({
-      success: true,
-      message: "Recommendation dismissed",
-      data: recommendation,
-    });
+    return sendSuccess(res, 200, recommendation, "Recommendation dismissed");
   } catch (error) {
     console.error("Dismiss recommendation error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server error dismissing recommendation",
-      error: error.message,
+    return sendError(res, 500, "Server error dismissing recommendation", error.message);
+  }
+};
+
+// @desc    Delete recommendation
+// @route   DELETE /api/v1/recommendations/:id
+// @access  Private
+exports.deleteRecommendation = async (req, res) => {
+  try {
+    const recommendation = await Recommendation.findOne({
+      _id: req.params.id,
+      user: req.user.id,
     });
+
+    if (!recommendation) {
+      return sendError(res, 404, "Recommendation not found");
+    }
+
+    await recommendation.deleteOne();
+
+    return sendSuccess(res, 200, null, "Recommendation deleted successfully");
+  } catch (error) {
+    console.error("Delete recommendation error:", error);
+    return sendError(res, 500, "Server error deleting recommendation", error.message);
+  }
+};
+
+// @desc    Mark recommendation as applied
+// @route   PUT /api/v1/recommendations/:id/apply
+// @access  Private
+exports.applyRecommendation = async (req, res) => {
+  try {
+    const recommendation = await Recommendation.findOne({
+      _id: req.params.id,
+      user: req.user.id,
+    });
+
+    if (!recommendation) {
+      return sendError(res, 404, "Recommendation not found");
+    }
+
+    recommendation.applied = true;
+    recommendation.appliedAt = new Date();
+    recommendation.status = "completed";
+    recommendation.updatedAt = Date.now();
+    await recommendation.save();
+
+    return sendSuccess(res, 200, recommendation, "Recommendation applied successfully");
+  } catch (error) {
+    console.error("Apply recommendation error:", error);
+    return sendError(res, 500, "Server error applying recommendation", error.message);
   }
 };
 

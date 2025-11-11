@@ -278,11 +278,21 @@ exports.getFilteredMeals = async (req, res) => {
     });
   } catch (error) {
     console.error("Get filtered meals error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server error fetching filtered meals",
-      error: error.message,
-    });
+    return sendError(res, 500, "Server error fetching filtered meals", error.message);
+  }
+};
+
+// @desc    Get meal suggestions for user
+// @route   GET /api/v1/meals/suggestions
+// @access  Private
+exports.getMealSuggestions = async (req, res) => {
+  try {
+    // This is essentially the same as getFilteredMeals but can be customized
+    // for suggestions (e.g., based on meal plan, time of day, etc.)
+    return exports.getFilteredMeals(req, res);
+  } catch (error) {
+    console.error("Get meal suggestions error:", error);
+    return sendError(res, 500, "Server error fetching meal suggestions", error.message);
   }
 };
 
