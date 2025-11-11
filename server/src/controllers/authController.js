@@ -318,3 +318,104 @@ exports.changePassword = async (req, res) => {
   }
 };
 
+// @desc    Forgot password
+// @route   POST /api/v1/auth/forgotpassword
+// @access  Public
+exports.forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    // Validation (declarative)
+    if (!email) {
+      return sendError(res, 400, "Please provide an email address");
+    }
+
+    // Find user (imperative: async operation)
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      // Don't reveal if user exists (security best practice)
+      return sendSuccess(
+        res,
+        200,
+        null,
+        "If that email exists, a password reset link has been sent"
+      );
+    }
+
+    // TODO: Generate reset token and send email
+    // For now, return success message
+    // In production, you would:
+    // 1. Generate reset token
+    // 2. Save hashed token to user model
+    // 3. Send email with reset link
+    // 4. Set token expiration
+
+    return sendSuccess(
+      res,
+      200,
+      null,
+      "If that email exists, a password reset link has been sent"
+    );
+  } catch (error) {
+    console.error("Forgot password error:", error);
+    return sendError(res, 500, "Server error processing forgot password", error.message);
+  }
+};
+
+// @desc    Reset password
+// @route   PUT /api/v1/auth/resetpassword/:token
+// @access  Public
+exports.resetPassword = async (req, res) => {
+  try {
+    const { token } = req.params;
+    const { password } = req.body;
+
+    // Validation (declarative)
+    if (!password) {
+      return sendError(res, 400, "Please provide a new password");
+    }
+
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.valid) {
+      return sendError(res, 400, passwordValidation.message);
+    }
+
+    // TODO: Verify reset token and update password
+    // For now, return not implemented
+    // In production, you would:
+    // 1. Verify token is valid and not expired
+    // 2. Find user by reset token
+    // 3. Update password
+    // 4. Clear reset token
+
+    return sendError(
+      res,
+      501,
+      "Password reset functionality not fully implemented yet"
+    );
+  } catch (error) {
+    console.error("Reset password error:", error);
+    return sendError(res, 500, "Server error resetting password", error.message);
+  }
+};
+
+// @desc    Logout user
+// @route   GET /api/v1/auth/logout
+// @access  Private
+exports.logout = async (req, res) => {
+  try {
+    // Since we're using JWT tokens (stateless), logout is handled client-side
+    // by removing the token. However, we can log the logout event if needed.
+
+    // In a production app with token blacklisting, you would:
+    // 1. Add token to blacklist
+    // 2. Invalidate refresh tokens if using them
+
+    return sendSuccess(res, 200, null, "Logged out successfully");
+  } catch (error) {
+    console.error("Logout error:", error);
+    return sendError(res, 500, "Server error during logout", error.message);
+  }
+};
+

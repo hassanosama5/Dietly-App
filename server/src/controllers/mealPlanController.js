@@ -447,11 +447,115 @@ exports.getMealPlanNutrition = async (req, res) => {
     });
   } catch (error) {
     console.error("Get meal plan nutrition error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server error calculating nutrition",
-      error: error.message,
+    return sendError(res, 500, "Server error calculating nutrition", error.message);
+  }
+};
+
+// @desc    Create manual meal plan
+// @route   POST /api/v1/meal-plans
+// @access  Private
+exports.createMealPlan = async (req, res) => {
+  try {
+    const { name, startDate, duration, days, targetNutrition } = req.body;
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return sendError(res, 404, "User not found");
+    }
+
+    if (!startDate || !duration || !days || !targetNutrition) {
+      return sendError(
+        res,
+        400,
+        "Please provide startDate, duration, days, and targetNutrition"
+      );
+    }
+
+    const start = new Date(startDate);
+    start.setHours(0, 0, 0, 0);
+
+    // Calculate total meals for adherence
+    let totalMeals = 0;
+    days.forEach((day) => {
+      totalMeals += 3; // breakfast, lunch, dinner
+      totalMeals += (day.meals.snacks || []).length;
     });
+
+    const mealPlan = await MealPlan.create({
+      user: user._id,
+      name: name || `Meal Plan - ${new Date().toLocaleDateString()}`,
+      startDate: start,
+      duration,
+      days,
+      targetNutrition,
+      status: "active",
+      generatedBy: "manual",
+      adherence: {
+        totalMeals,
+        consumedMeals: 0,
+        adherencePercentage: 0,
+      },
+    });
+
+    const populatedPlan = await MealPlan.findById(mealPlan._id)
+      .populate("days.meals.breakfast.meal")
+      .populate("days.meals.lunch.meal")
+      .populate("days.meals.dinner.meal")
+      .populate("days.meals.snacks.meal");
+
+    return sendSuccess(res, 201, populatedPlan);
+  } catch (error) {
+    console.error("Create meal plan error:", error);
+    return sendError(res, 500, "Server error creating meal plan", error.message);
+  }
+};
+
+// @desc    Delete meal plan
+// @route   DELETE /api/v1/meal-plans/:id
+// @access  Private
+exports.deleteMealPlan = async (req, res) => {
+  try {
+    const mealPlan = await MealPlan.findOne({
+      _id: req.params.id,
+      user: req.user.id,
+    });
+
+    if (!mealPlan) {
+      return sendError(res, 404, "Meal plan not found");
+    }
+
+    await mealPlan.deleteOne();
+
+    return sendSuccess(res, 200, null, "Meal plan deleted successfully");
+  } catch (error) {
+    console.error("Delete meal plan error:", error);
+    return sendError(res, 500, "Server error deleting meal plan", error.message);
+  }
+};
+
+// @desc    Get adherence progress for plan
+// @route   GET /api/v1/meal-plans/progress/:id
+// @access  Private
+exports.getMealPlanProgress = async (req, res) => {
+  try {
+    // This returns the meal plan with adherence data
+    return exports.getMealPlan(req, res);
+  } catch (error) {
+    console.error("Get meal plan progress error:", error);
+    return sendError(res, 500, "Server error fetching meal plan progress", error.message);
+  }
+};
+
+// @desc    Get weekly nutrition summary
+// @route   GET /api/v1/meal-plans/summary/:id
+// @access  Private
+exports.getMealPlanSummary = async (req, res) => {
+  try {
+    // This is the same as getMealPlanNutrition
+    return exports.getMealPlanNutrition(req, res);
+  } catch (error) {
+    console.error("Get meal plan summary error:", error);
+    return sendError(res, 500, "Server error fetching meal plan summary", error.message);
   }
 };
 

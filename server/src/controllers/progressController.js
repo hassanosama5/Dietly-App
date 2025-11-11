@@ -378,11 +378,51 @@ exports.getLatestProgress = async (req, res) => {
     });
   } catch (error) {
     console.error("Get latest progress error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server error fetching latest progress",
-      error: error.message,
+    return sendError(res, 500, "Server error fetching latest progress", error.message);
+  }
+};
+
+// @desc    Get progress trends over time
+// @route   GET /api/v1/progress/trends
+// @access  Private
+exports.getProgressTrends = async (req, res) => {
+  try {
+    // This can use the same stats endpoint or provide more detailed trend analysis
+    const { days = 30 } = req.query;
+    req.query.days = days;
+    return exports.getProgressStats(req, res);
+  } catch (error) {
+    console.error("Get progress trends error:", error);
+    return sendError(res, 500, "Server error fetching progress trends", error.message);
+  }
+};
+
+// @desc    Add progress photos
+// @route   POST /api/v1/progress/:id/photos
+// @access  Private
+exports.addProgressPhotos = async (req, res) => {
+  try {
+    const progress = await Progress.findOne({
+      _id: req.params.id,
+      user: req.user.id,
     });
+
+    if (!progress) {
+      return sendError(res, 404, "Progress entry not found");
+    }
+
+    // TODO: Implement photo upload functionality
+    // For now, return not implemented
+    // In production, you would:
+    // 1. Handle file upload (using multer or similar)
+    // 2. Store photos (local storage or cloud storage)
+    // 3. Save photo URLs to progress entry
+    // 4. Return updated progress entry
+
+    return sendError(res, 501, "Progress photo upload not implemented yet");
+  } catch (error) {
+    console.error("Add progress photos error:", error);
+    return sendError(res, 500, "Server error adding progress photos", error.message);
   }
 };
 
