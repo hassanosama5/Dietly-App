@@ -1,60 +1,57 @@
 const express = require('express');
 const router = express.Router();
+const {
+  register,
+  login,
+  logout,
+  getMe,
+  updateProfile,
+  changePassword,
+  forgotPassword,
+  resetPassword,
+} = require('../controllers/authController');
+const { protect } = require('../middleware/auth');
+const { validateRegister, validateLogin } = require('../middleware/validation');
+const { authLimiter } = require('../middleware/rateLimiter');
 
 // @desc    Register user
 // @route   POST /api/v1/auth/register
 // @access  Public
-router.post('/register', (req, res) => {
-  res.status(200).json({ success: true, message: 'Register route' });
-});
+router.post('/register', authLimiter, validateRegister, register);
 
 // @desc    Login user
 // @route   POST /api/v1/auth/login
 // @access  Public
-router.post('/login', (req, res) => {
-  res.status(200).json({ success: true, message: 'Login route' });
-});
+router.post('/login', authLimiter, validateLogin, login);
 
 // @desc    Logout user
 // @route   GET /api/v1/auth/logout
 // @access  Private
-router.get('/logout', (req, res) => {
-  res.status(200).json({ success: true, message: 'Logout route' });
-});
+router.get('/logout', protect, logout);
 
 // @desc    Get current logged in user
 // @route   GET /api/v1/auth/me
 // @access  Private
-router.get('/me', (req, res) => {
-  res.status(200).json({ success: true, message: 'Get me route' });
-});
+router.get('/me', protect, getMe);
 
 // @desc    Update user details
 // @route   PUT /api/v1/auth/updatedetails
 // @access  Private
-router.put('/updatedetails', (req, res) => {
-  res.status(200).json({ success: true, message: 'Update details route' });
-});
+router.put('/updatedetails', protect, updateProfile);
 
 // @desc    Update password
 // @route   PUT /api/v1/auth/updatepassword
 // @access  Private
-router.put('/updatepassword', (req, res) => {
-  res.status(200).json({ success: true, message: 'Update password route' });
-});
+router.put('/updatepassword', protect, changePassword);
 
 // @desc    Forgot password
 // @route   POST /api/v1/auth/forgotpassword
 // @access  Public
-router.post('/forgotpassword', (req, res) => {
-  res.status(200).json({ success: true, message: 'Forgot password route' });
-});
+router.post('/forgotpassword', forgotPassword);
 
 // @desc    Reset password
 // @route   PUT /api/v1/auth/resetpassword/:token
 // @access  Public
-router.put('/resetpassword/:token', (req, res) => {
-  res.status(200).json({ success: true, message: 'Reset password route' });
-});
+router.put('/resetpassword/:token', resetPassword);
 
 module.exports = router;
