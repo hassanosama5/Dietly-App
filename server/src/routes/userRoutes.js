@@ -3,6 +3,7 @@ const router = express.Router();
 const {
   getUsers,
   getUser,
+  createUser,
   updateUser,
   deleteUser,
   getUserStats,
@@ -11,6 +12,7 @@ const {
   getProfile,
   calculateNutrition,
   getUserProfileStats,
+  updateProfile,
 } = require('../controllers/userController');
 const { protect, authorize } = require('../middleware/auth');
 const { validateUserUpdate, validateId } = require('../middleware/validation');
@@ -42,12 +44,10 @@ router.get('/profile/stats', protect, getUserProfileStats);
 // @access  Admin
 router.get('/', protect, authorize('admin'), getUsers);
 
-// @desc    Create user (not implemented yet)
+// @desc    Create user
 // @route   POST /api/v1/users
 // @access  Admin
-router.post('/', protect, authorize('admin'), (req, res) => {
-  res.status(501).json({ success: false, message: 'Create user not implemented yet' });
-});
+router.post('/', protect, authorize('admin'), createUser);
 
 // Dynamic routes (must come after specific routes)
 // @desc    Get user by ID
