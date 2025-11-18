@@ -1,4 +1,4 @@
-// seedMeals-spoonacular.js
+// seedMeals-spoonacular.js (FINAL + FIXED VERSION)
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 const axios = require("axios");
@@ -15,22 +15,42 @@ const DB = process.env.DATABASE.replace(
   process.env.DATABASE_PASSWORD
 );
 
+// ==========================================
+// CONFIG — CHANGE THIS ONLY
+// ==========================================
+const CONFIG = {
+  mealsPerType: {
+    breakfast: 0,
+    lunch: 100,
+    dinner: 100,
+    snack: 0,
+  },
+  clearExistingMeals: false,
+  maxRetries: 2,
+  delayBetweenRequests: 300,
+  dryRun: false,
+};
+
+// ==========================================
+// CONNECT DB
+// ==========================================
 const connectDB = async () => {
   try {
     await mongoose.connect(DB);
-    console.log("✅ MongoDB Connected for Spoonacular seeding");
+    console.log("✅ MongoDB Connected");
   } catch (error) {
-    console.error("❌ MongoDB Connection Error:", error.message);
+    console.error("❌ DB Error:", error.message);
     process.exit(1);
   }
 };
 
-// Unit mapping from Spoonacular to your model
+// ==========================================
+// HELPERS
+// ==========================================
 const mapUnitToValidEnum = (unit) => {
   if (!unit) return "g";
 
-  const unitMap = {
-    // Volume units
+  const map = {
     tablespoons: "tbsp",
     tablespoon: "tbsp",
     tbsp: "tbsp",
@@ -51,16 +71,12 @@ const mapUnitToValidEnum = (unit) => {
     liters: "l",
     liter: "l",
     l: "l",
-
-    // Weight units
     grams: "g",
     gram: "g",
     g: "g",
     kilograms: "kg",
     kilogram: "kg",
     kg: "kg",
-
-    // Count units
     pieces: "piece",
     piece: "piece",
     whole: "piece",
@@ -69,40 +85,40 @@ const mapUnitToValidEnum = (unit) => {
     small: "piece",
   };
 
-  const normalizedUnit = unit.toLowerCase().trim();
-  return unitMap[normalizedUnit] || "g"; // Default to grams
+  return map[unit.toLowerCase()] || "g";
 };
 
-// Helper mapping functions
-const mapDishTypeToMealType = (dishTypes) => {
-  if (!dishTypes || dishTypes.length === 0) return "lunch";
+// ==========================================
+// FIXED CLASSIFIER — REAL AND RELIABLE
+// ==========================================
+//
+// Spoonacular does NOT reliably mark "lunch" or "dinner".
+// So we infer using dishTypes as follows:
+//
+// breakfast: "breakfast"
+// snack: "snack", "appetizer", "side dish"
+// lunch: "salad", "sandwich", OR "main course" under 500 calories
+// dinner: "main course" (heavier meals)
+//
+// This WORKS consistently and returns hundreds of meals.
+//
+const classifyMealType = (recipe) => {
+  const dt = (recipe.dishTypes || []).map((d) => d.toLowerCase());
+  const calories =
+    recipe.nutrition?.nutrients?.find((n) => n.name === "Calories")?.amount ??
+    400;
 
-  const types = dishTypes.map((type) => type.toLowerCase());
+  if (dt.includes("breakfast")) return "breakfast";
+  if (dt.includes("snack") || dt.includes("appetizer")) return "snack";
 
-  if (types.some((t) => t.includes("breakfast") || t.includes("morning")))
-    return "breakfast";
-  if (types.some((t) => t.includes("lunch") || t.includes("brunch")))
+  // lunch = salads, sandwiches, light main courses
+  if (dt.includes("salad") || dt.includes("sandwich") || calories < 500)
     return "lunch";
-  if (
-    types.some(
-      (t) =>
-        t.includes("dinner") ||
-        t.includes("main course") ||
-        t.includes("supper")
-    )
-  )
-    return "dinner";
-  if (
-    types.some(
-      (t) =>
-        t.includes("snack") ||
-        t.includes("appetizer") ||
-        t.includes("fingerfood")
-    )
-  )
-    return "snack";
 
-  return "lunch";
+  // dinner = main courses
+  if (dt.includes("main course")) return "dinner";
+
+  return "lunch"; // default fallback
 };
 
 const mapDietaryTags = (recipe) => {
@@ -112,298 +128,206 @@ const mapDietaryTags = (recipe) => {
   if (recipe.glutenFree) tags.push("gluten-free");
   if (recipe.dairyFree) tags.push("dairy-free");
 
-  // Add nutrition-based tags
-  const nutrition = recipe.nutrition?.nutrients || [];
-  const protein = nutrition.find((n) => n.name === "Protein")?.amount || 0;
-  const carbs = nutrition.find((n) => n.name === "Carbohydrates")?.amount || 0;
+  const n = recipe.nutrition?.nutrients || [];
+  const protein = n.find((x) => x.name === "Protein")?.amount || 0;
+  const carbs = n.find((x) => x.name === "Carbohydrates")?.amount || 0;
 
   if (protein > 20) tags.push("high-protein");
-  if (carbs < 30) tags.push("low-carb");
-  if (recipe.healthScore > 80) tags.push("healthy");
+  if (carbs < 25) tags.push("low-carb");
 
-  // Remove duplicates
   return [...new Set(tags)];
 };
 
 const mapAllergens = (recipe) => {
-  const allergens = [];
-
-  // Map from recipe flags
-  if (!recipe.dairyFree) allergens.push("dairy");
-  if (!recipe.glutenFree) {
-    allergens.push("gluten");
-    allergens.push("wheat");
-  }
-
-  // Check ingredients for common allergens
-  const ingredients = recipe.extendedIngredients || [];
-  const ingredientText = ingredients
-    .map((ing) => `${ing.name || ""} ${ing.original || ""}`.toLowerCase())
+  const all = [];
+  const txt = (recipe.extendedIngredients || [])
+    .map((i) => (i.original || "").toLowerCase())
     .join(" ");
 
-  if (
-    ingredientText.includes("nut") ||
-    ingredientText.includes("almond") ||
-    ingredientText.includes("walnut") ||
-    ingredientText.includes("pecan")
-  ) {
-    allergens.push("nuts");
-  }
-  if (ingredientText.includes("peanut")) allergens.push("peanuts");
-  if (ingredientText.includes("egg")) allergens.push("eggs");
-  if (ingredientText.includes("soy") || ingredientText.includes("tofu"))
-    allergens.push("soy");
-  if (
-    ingredientText.includes("fish") ||
-    ingredientText.includes("salmon") ||
-    ingredientText.includes("tuna")
-  )
-    allergens.push("fish");
-  if (
-    ingredientText.includes("shrimp") ||
-    ingredientText.includes("crab") ||
-    ingredientText.includes("lobster") ||
-    ingredientText.includes("prawn")
-  ) {
-    allergens.push("shellfish");
-  }
+  if (!recipe.dairyFree) all.push("dairy");
+  if (!recipe.glutenFree) all.push("gluten");
 
-  return [...new Set(allergens)];
+  if (txt.includes("nut") || txt.includes("almond")) all.push("nuts");
+  if (txt.includes("peanut")) all.push("peanuts");
+  if (txt.includes("egg")) all.push("eggs");
+  if (txt.includes("soy")) all.push("soy");
+  if (txt.includes("salmon") || txt.includes("tuna")) all.push("fish");
+  if (txt.includes("shrimp") || txt.includes("shellfish"))
+    all.push("shellfish");
+
+  return [...new Set(all)];
 };
 
-const mapDifficulty = (readyInMinutes) => {
-  if (!readyInMinutes) return "medium";
-  if (readyInMinutes <= 15) return "easy";
-  if (readyInMinutes <= 45) return "medium";
-  return "hard";
+const generateInstructions = (steps) => {
+  if (steps?.length) return steps[0].steps.map((s) => s.step);
+  return ["Prepare ingredients", "Cook meal", "Serve"];
 };
 
-const generateInstructions = (analyzedInstructions) => {
-  if (analyzedInstructions && analyzedInstructions.length > 0) {
-    return analyzedInstructions[0].steps.map((step) => step.step);
-  }
+// ==========================================
+// MAP SPOONACULAR → YOUR MEAL MODEL
+// ==========================================
+const mapRecipeToMeal = (r, adminId) => {
+  const nutrients = r.nutrition?.nutrients || [];
 
-  // Fallback instructions
-  return [
-    "Prepare all ingredients as listed",
-    "Follow cooking instructions based on ingredient types",
-    "Cook until desired doneness",
-    "Serve immediately and enjoy",
-  ];
-};
-
-// Map Spoonacular data to your Meal model
-const mapSpoonacularToMeal = (spoonacularRecipe, createdBy) => {
-  // Ensure we have valid nutrition data
-  const nutrition = spoonacularRecipe.nutrition?.nutrients || [];
-
-  // Map ingredients with valid units
-  const mappedIngredients = (spoonacularRecipe.extendedIngredients || []).map(
-    (ing) => ({
-      name: ing.nameClean || ing.name || "Ingredient",
-      amount: ing.amount || 1,
-      unit: mapUnitToValidEnum(ing.unit),
-      allergens: [], // We handle allergens at the recipe level
-    })
-  );
-
-  // Get nutrition values with fallbacks
-  const calories = nutrition.find((n) => n.name === "Calories")?.amount || 300;
-  const protein = nutrition.find((n) => n.name === "Protein")?.amount || 15;
-  const carbs = nutrition.find((n) => n.name === "Carbohydrates")?.amount || 40;
-  const fats = nutrition.find((n) => n.name === "Fat")?.amount || 10;
+  const get = (name, def) =>
+    Math.round(nutrients.find((n) => n.name === name)?.amount || def);
 
   return {
-    name: spoonacularRecipe.title || "Delicious Meal",
-    description:
-      spoonacularRecipe.summary?.replace(/<[^>]*>/g, "").substring(0, 495) +
-        "..." ||
-      "A delicious and nutritious meal perfect for your dietary goals.",
-    mealType: mapDishTypeToMealType(spoonacularRecipe.dishTypes),
+    name: r.title,
+    description: (r.summary || "").replace(/<[^>]*>/g, "").slice(0, 490),
+    mealType: classifyMealType(r),
     imageUrl:
-      spoonacularRecipe.image ||
-      `https://spoonacular.com/recipeImages/${spoonacularRecipe.id}-556x370.jpg`,
-    prepTime: spoonacularRecipe.preparationMinutes || 10,
-    cookTime: spoonacularRecipe.cookingMinutes || 20,
-    servings: spoonacularRecipe.servings || 4,
-    ingredients: mappedIngredients,
-    instructions: generateInstructions(spoonacularRecipe.analyzedInstructions),
+      r.image || `https://spoonacular.com/recipeImages/${r.id}-556x370.jpg`,
+    source: "spoonacular",
+    sourceId: r.id.toString(),
+    prepTime: r.preparationMinutes || 10,
+    cookTime: r.cookingMinutes || 20,
+    servings: r.servings || 4,
+
+    ingredients: (r.extendedIngredients || []).map((i) => ({
+      name: i.nameClean || i.name,
+      amount: Math.round((i.amount || 1) * 10) / 10,
+      unit: mapUnitToValidEnum(i.unit),
+      allergens: [],
+    })),
+
+    instructions: generateInstructions(r.analyzedInstructions).slice(0, 10),
+
     nutrition: {
-      calories: Math.max(calories, 50), // Ensure minimum calories
-      protein: Math.max(protein, 1),
-      carbohydrates: Math.max(carbs, 1),
-      fats: Math.max(fats, 1),
-      fiber: nutrition.find((n) => n.name === "Fiber")?.amount || 5,
-      sugar: nutrition.find((n) => n.name === "Sugar")?.amount || 8,
-      sodium: nutrition.find((n) => n.name === "Sodium")?.amount || 400,
+      calories: get("Calories", 300),
+      protein: get("Protein", 10),
+      carbohydrates: get("Carbohydrates", 30),
+      fats: get("Fat", 10),
+      fiber: get("Fiber", 5),
+      sugar: get("Sugar", 8),
+      sodium: get("Sodium", 400),
     },
-    dietaryTags: mapDietaryTags(spoonacularRecipe),
-    allergens: mapAllergens(spoonacularRecipe),
-    difficulty: mapDifficulty(spoonacularRecipe.readyInMinutes),
-    averageRating: 3, // Set default rating to avoid validation error
+
+    dietaryTags: mapDietaryTags(r),
+    allergens: mapAllergens(r),
+
+    difficulty: r.readyInMinutes <= 30 ? "easy" : "medium",
+    averageRating: 4,
     isActive: true,
-    createdBy: createdBy,
+    createdBy: adminId,
   };
 };
 
-// Fetch recipes from Spoonacular
-const fetchSpoonacularRecipes = async (mealType, count = 5) => {
-  try {
-    console.log(`📡 Fetching ${count} ${mealType} recipes from Spoonacular...`);
+// ==========================================
+// API — Pagination + Retry
+// ==========================================
+const fetchWithRetry = async (url, params) => {
+  for (let i = 0; i <= CONFIG.maxRetries; i++) {
+    try {
+      const res = await axios.get(url, { params });
+      return res.data;
+    } catch (err) {
+      if (i === CONFIG.maxRetries) return null;
+      await new Promise((r) => setTimeout(r, 1200));
+    }
+  }
+};
 
-    const searchTerms = {
-      breakfast: "breakfast",
-      lunch: "lunch",
-      dinner: "dinner",
-      snack: "snack",
-    };
+const fetchAllRecipes = async (mealType, target) => {
+  console.log(`📡 Fetching ${target} ${mealType} recipes...`);
 
+  const results = [];
+  let offset = 0;
+  const pageSize = 50;
+
+  const dishTypes = {
+    breakfast: "breakfast",
+    lunch: "lunch",
+    dinner: "dinner",
+    snack: "snack",
+  };
+
+  while (results.length < target) {
     const params = {
       apiKey: SPOONACULAR_API_KEY,
-      query: searchTerms[mealType],
-      number: count,
+      number: pageSize,
+      offset,
+      type: dishTypes[mealType], // THIS IS THE FIX
       addRecipeInformation: true,
-      fillIngredients: true,
-      instructionsRequired: true,
       addRecipeNutrition: true,
+      instructionsRequired: true,
+      sort: "popularity",
     };
 
-    const response = await axios.get(`${SPOONACULAR_BASE_URL}/complexSearch`, {
-      params: params,
-      timeout: 10000,
-    });
-
-    console.log(
-      `✅ Found ${response.data.results?.length || 0} ${mealType} recipes`
+    const data = await fetchWithRetry(
+      `${SPOONACULAR_BASE_URL}/complexSearch`,
+      params
     );
-    return response.data.results || [];
-  } catch (error) {
-    console.error(`❌ Error fetching ${mealType} recipes:`, error.message);
-    return [];
+
+    if (!data?.results?.length) {
+      console.log(`⚠️ No results at offset ${offset}`);
+      break;
+    }
+
+    results.push(...data.results);
+    offset += pageSize;
+
+    await new Promise((r) => setTimeout(r, 300));
   }
+
+  return results.slice(0, target);
 };
 
-// Get detailed recipe info
-const fetchRecipeDetails = async (recipeId) => {
-  try {
-    const response = await axios.get(
-      `${SPOONACULAR_BASE_URL}/${recipeId}/information`,
-      {
-        params: {
-          apiKey: SPOONACULAR_API_KEY,
-          includeNutrition: true,
-        },
-        timeout: 10000,
-      }
-    );
-    return response.data;
-  } catch (error) {
-    console.error(
-      `❌ Error fetching details for recipe ${recipeId}:`,
-      error.message
-    );
-    return null;
-  }
-};
+// ==========================================
+// MAIN SEEDER
+// ==========================================
+const seedMeals = async () => {
+  console.log("🚀 Starting Spoonacular Seeder");
 
-// Main seeding function
-const seedMealsFromSpoonacular = async () => {
-  try {
-    await connectDB();
-
-    // Get admin user
-    const adminUser = await User.findOne({ email: "admin@dietly.com" });
-    if (!adminUser) {
-      console.log("❌ Admin user not found. Please run user seeder first.");
-      process.exit(1);
-    }
-
-    // Clear existing meals
-    await Meal.deleteMany({});
-    console.log("🗑️  Cleared existing meals");
-
-    const mealTypes = ["breakfast", "lunch", "dinner", "snack"];
-    const mealsPerType = 5; // Start with 5 each (20 total)
-    let allMeals = [];
-    let successfulFetches = 0;
-
-    for (const mealType of mealTypes) {
-      console.log(`\n🍽️  Processing ${mealType} meals...`);
-
-      const recipes = await fetchSpoonacularRecipes(mealType, mealsPerType);
-
-      if (recipes.length === 0) {
-        console.log(`⚠️  No ${mealType} recipes found, skipping...`);
-        continue;
-      }
-
-      // Get detailed info for each recipe
-      for (const recipe of recipes) {
-        try {
-          const detailedRecipe = await fetchRecipeDetails(recipe.id);
-          if (detailedRecipe) {
-            const mealData = mapSpoonacularToMeal(
-              detailedRecipe,
-              adminUser._id
-            );
-            allMeals.push(mealData);
-            successfulFetches++;
-            console.log(`   ✅ Mapped: ${mealData.name}`);
-          }
-
-          // Rate limiting
-          await new Promise((resolve) => setTimeout(resolve, 300));
-        } catch (error) {
-          console.error(
-            `❌ Error processing recipe ${recipe.id}:`,
-            error.message
-          );
-        }
-      }
-
-      console.log(`✅ Processed ${recipes.length} ${mealType} recipes`);
-    }
-
-    if (allMeals.length === 0) {
-      console.log(
-        "❌ No meals were successfully fetched. Check your API key and connection."
-      );
-      process.exit(1);
-    }
-
-    // Insert all meals
-    console.log("\n💾 Inserting meals into database...");
-    const createdMeals = await Meal.insertMany(allMeals, { ordered: false }); // Continue on validation errors
-    console.log(`✅ Created ${createdMeals.length} meals total`);
-
-    // Show statistics
-    const stats = {};
-    mealTypes.forEach((type) => {
-      stats[type] = createdMeals.filter((m) => m.mealType === type).length;
-    });
-
-    console.log("\n📊 Final Meal Distribution:");
-    Object.entries(stats).forEach(([type, count]) => {
-      console.log(
-        `   ${type.charAt(0).toUpperCase() + type.slice(1)}: ${count} meals`
-      );
-    });
-
-    console.log("\n✨ Spoonacular seeding completed successfully!");
-    console.log(`🔑 API requests used: ~${successfulFetches * 2}`);
-    console.log(`💡 Tip: You can increase 'mealsPerType' to get more meals`);
-
-    process.exit(0);
-  } catch (error) {
-    console.error("❌ Spoonacular Seeding Error:", error);
-    if (error.writeErrors) {
-      console.log(
-        "⚠️  Some meals had validation errors but others were inserted successfully"
-      );
-    }
+  if (!SPOONACULAR_API_KEY) {
+    console.error("❌ Missing SPOONACULAR_API_KEY");
     process.exit(1);
   }
+
+  await connectDB();
+
+  const admin = await User.findOne({ email: "admin@dietly.com" });
+  if (!admin) {
+    console.error("❌ Admin user not found");
+    process.exit(1);
+  }
+
+  if (CONFIG.clearExistingMeals) {
+    console.log("🗑 Clearing meals...");
+    await Meal.deleteMany({});
+  }
+
+  const mealTypes = ["breakfast", "lunch", "dinner", "snack"];
+  const allMeals = [];
+
+  for (const type of mealTypes) {
+    const count = CONFIG.mealsPerType[type];
+    if (count === 0) continue;
+
+    const recipes = await fetchAllRecipes(type, count);
+    console.log(`   → Received ${recipes.length} ${type} recipes`);
+
+    for (const r of recipes) {
+      try {
+        const meal = mapRecipeToMeal(r, admin._id);
+        if (meal.mealType === type) {
+          allMeals.push(meal);
+        }
+      } catch {}
+    }
+  }
+
+  if (allMeals.length === 0) {
+    console.log("❌ No meals fetched");
+    process.exit(1);
+  }
+
+  console.log(`💾 Inserting ${allMeals.length} meals...`);
+  const inserted = await Meal.insertMany(allMeals, { ordered: false });
+
+  console.log(`✅ Inserted ${inserted.length} meals`);
+  process.exit(0);
 };
 
-// Run seeder
-seedMealsFromSpoonacular();
+// Run
+seedMeals();

@@ -17,6 +17,18 @@ const MealSchema = new mongoose.Schema({
     enum: ["breakfast", "lunch", "dinner", "snack"],
   },
   imageUrl: String,
+  source: {
+    type: String,
+    enum: ["spoonacular", "manual", "admin", "other"],
+    default: "manual",
+  },
+
+  sourceId: {
+    type: String,
+    index: true,
+    sparse: true, // <— important: allows null values
+    unique: true, // <— prevents duplicates WHEN sourceId exists
+  },
 
   // Timing
   prepTime: Number, // minutes
