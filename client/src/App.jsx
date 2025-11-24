@@ -70,6 +70,15 @@ function App() {
                 </GuestRoute>
               }
             />
+            {/* Profile Setup */}
+            <Route
+              path="/profile-setup"
+              element={
+                <ProtectedRoute allowIncompleteProfile={true}>
+                  <ProfileSetup />
+                </ProtectedRoute>
+              }
+            />
 
             {/* Guest Dashboard */}
             <Route
