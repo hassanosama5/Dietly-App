@@ -23,6 +23,9 @@ import MealPlanView from "./components/meal-plans/MealPlanView";
 import LoadingSpinner from "./components/common/LoadingSpinner";
 import DashboardLayout from "./components/layouts/DashboardLayout";
 
+// 🔥 Correct import for your admin dashboard page
+import DashboardAdmin from "./pages/DashboardAdmin";
+
 // Route for logged-in users
 const ProtectedRoute = ({ children, allowIncompleteProfile = false }) => {
   const { isAuthenticated, loading, isProfileComplete } = useAuth();
@@ -72,6 +75,7 @@ function App() {
                 </GuestRoute>
               }
             />
+
             {/* Profile Setup */}
             <Route
               path="/profile-setup"
@@ -81,28 +85,30 @@ function App() {
                 </ProtectedRoute>
               }
             />
+
             {/* Profile Page */}
-<Route
-  path="/profile"
-  element={
-    <ProtectedRoute>
-      <DashboardLayout>
-        <Profile />
-      </DashboardLayout>
-    </ProtectedRoute>
-  }
-/>
-{/* Settings Page */}
-<Route
-  path="/settings"
-  element={
-    <ProtectedRoute>
-      <DashboardLayout>
-        <Settings />
-      </DashboardLayout>
-    </ProtectedRoute>
-  }
-/>
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <Profile />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Settings Page */}
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <Settings />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
 
             {/* Guest Dashboard */}
             <Route
@@ -120,6 +126,16 @@ function App() {
               element={
                 <ProtectedRoute>
                   <DashboardUser />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* 🔥 NEW ADMIN DASHBOARD ROUTE */}
+            <Route
+              path="/admin-dashboard"
+              element={
+                <ProtectedRoute>
+                  <DashboardAdmin />
                 </ProtectedRoute>
               }
             />
