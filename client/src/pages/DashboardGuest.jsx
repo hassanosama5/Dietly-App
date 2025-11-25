@@ -89,74 +89,67 @@ const DashboardGuest = () => {
       {/* ==================== HERO SECTION ==================== */}
       <section className="relative pt-32 pb-24">
         <div className="max-w-[1200px] mx-auto px-8">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
-            {/* Left Column - Hero Content */}
-            <div className="space-y-8">
-              <div className="space-y-6">
-                {/* Badge */}
-                <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#246608]/10 border border-[#246608]/20 rounded-full">
-                  <Sparkles className="w-4 h-4 text-[#246608]" />
-                  <span className="text-xs font-semibold text-[#246608] tracking-widest">
-                    AI-POWERED NUTRITION
-                  </span>
-                </div>
-
-                {/* Headline */}
-                <h1 className="text-5xl lg:text-6xl font-bold leading-[1.1] tracking-tight">
-                  THE SMARTER PATH
-                  <br />
-                  TO YOUR
-                  <br />
-                  TARGET WEIGHT
-                </h1>
-
-                {/* Sub-headline */}
-                <p className="text-lg text-gray-400 leading-relaxed max-w-lg">
-                  Dietly AI uses advanced insights to craft perfectly
-                  personalized nutrition plans that evolve with you.
-                </p>
+          {/* Center All Content */}
+          <div className="space-y-8 text-center">
+            <div className="space-y-6">
+              {/* Badge */}
+              <div
+                className="inline-flex items-center gap-2 px-4 py-2 bg-[#246608]/10 
+                        border border-[#246608]/20 rounded-full mx-auto"
+              >
+                <Sparkles className="w-4 h-4 text-[#246608]" />
+                <span className="text-xs font-semibold text-[#246608] tracking-widest">
+                  AI-POWERED NUTRITION
+                </span>
               </div>
 
-              {/* CTA Buttons */}
-              <div className="flex items-center gap-4">
-                <Button
-                  onClick={() => navigate("/register")}
-                  size="lg"
-                  className="px-8 py-6 bg-[#246608] hover:opacity-80 transition-all duration-300 text-base font-semibold"
-                >
-                  <TrendingUp className="w-5 h-5 mr-2" />
-                  START YOUR JOURNEY
-                </Button>
+              {/* Headline */}
+              <h1 className="w-full text-center text-5xl lg:text-6xl font-bold leading-[1.1] tracking-tight">
+                THE SMARTER PATH
+                <br />
+                TO YOUR
+                <br />
+                TARGET WEIGHT
+              </h1>
 
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="px-8 py-6 bg-transparent border-2 border-[#246608]/20 
-             hover:bg-[#246608]/10 transition-all duration-300 text-base 
-             font-semibold text-[#246608]"
-                  onClick={() => {
-                    const section = document.getElementById("how");
-                    if (section) {
-                      // Adjust offset for fixed navbar (e.g., 80px height)
-                      const yOffset = -120;
-                      const y =
-                        section.getBoundingClientRect().top +
-                        window.pageYOffset +
-                        yOffset;
-                      window.scrollTo({ top: y, behavior: "smooth" });
-                    }
-                  }}
-                >
-                  HOW IT WORKS
-                </Button>
-              </div>
+              {/* Sub-headline */}
+              <p className="text-lg text-gray-400 leading-relaxed max-w-lg mx-auto">
+                Dietly AI uses advanced insights to craft perfectly personalized
+                nutrition plans that evolve with you.
+              </p>
             </div>
 
-            {/* Right Column - Data Visualization */}
-            <div className="flex items-center justify-center">
-              <div className="bg-[#F6F9F6] border border-[#246608]/10 rounded-3xl shadow-2xl p-12">
-                <CircularProgress value={`80 kg`} label="Sample Weight" />
-              </div>
+            {/* CTA Buttons */}
+            <div className="flex items-center justify-center gap-4">
+              <Button
+                onClick={() => navigate("/register")}
+                size="lg"
+                className="px-8 py-6 bg-[#246608] hover:opacity-80 transition-all duration-300 text-base font-semibold"
+              >
+                <TrendingUp className="w-5 h-5 mr-2" />
+                START YOUR JOURNEY
+              </Button>
+
+              <Button
+                variant="outline"
+                size="lg"
+                className="px-8 py-6 bg-transparent border-2 border-[#246608]/20 
+                     hover:bg-[#246608]/10 transition-all duration-300 
+                     text-base font-semibold text-[#246608]"
+                onClick={() => {
+                  const section = document.getElementById("how");
+                  if (section) {
+                    const yOffset = -120;
+                    const y =
+                      section.getBoundingClientRect().top +
+                      window.pageYOffset +
+                      yOffset;
+                    window.scrollTo({ top: y, behavior: "smooth" });
+                  }
+                }}
+              >
+                HOW IT WORKS
+              </Button>
             </div>
           </div>
         </div>
