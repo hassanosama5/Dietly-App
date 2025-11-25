@@ -6,7 +6,7 @@ import { Button } from "../../components/ui/button";
 import { Calendar } from "lucide-react";
 
 const ProfileSetup = () => {
-  const { user, updateProfile, loading } = useAuth();
+  const { user, updateProfile, finalizeRegistration, loading, clearJustRegistered, pendingRegistration } = useAuth();
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedGoal, setSelectedGoal] = useState("");
@@ -25,15 +25,29 @@ const ProfileSetup = () => {
   const [weightUnit, setWeightUnit] = useState("imperial");
   const [weeklyGoal, setWeeklyGoal] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [profileCompleted, setProfileCompleted] = useState(false);
 
-  // Force redirect if profile is marked as completed
+  // Debug logging
   useEffect(() => {
-    if (profileCompleted) {
-      console.log("Profile completed, redirecting to dashboard");
-      navigate("/user-dashboard", { replace: true });
+    console.log("🔍 ProfileSetup Debug:");
+    console.log("User:", user);
+    console.log("Pending Registration:", pendingRegistration);
+    console.log("Current Step:", currentStep);
+  }, [user, pendingRegistration, currentStep]);
+
+  useEffect(() => {
+    clearJustRegistered();
+  }, [clearJustRegistered]);
+
+  // Set default weekly goal when step 5 is reached
+  useEffect(() => {
+    if (currentStep === 5 && !weeklyGoal && selectedGoal) {
+      if (selectedGoal === "lose" || selectedGoal === "gain") {
+        setWeeklyGoal("0.25");
+      } else {
+        setWeeklyGoal("0");
+      }
     }
-  }, [profileCompleted, navigate]);
+  }, [currentStep, selectedGoal, weeklyGoal]);
 
   if (loading) return <LoadingSpinner />;
 
@@ -119,7 +133,10 @@ const ProfileSetup = () => {
       setIsSubmitting(true);
       try {
         const profileData = { healthGoal: selectedGoal };
-        await updateProfile(profileData);
+        // For new users, we don't save anything until the end
+        if (user) {
+          await updateProfile(profileData);
+        }
         setCurrentStep(2);
         if (selectedGoal === "maintain") {
           setWeeklyGoal("");
@@ -135,7 +152,10 @@ const ProfileSetup = () => {
       setIsSubmitting(true);
       try {
         const profileData = { activityLevel: selectedActivityLevel };
-        await updateProfile(profileData);
+        // For new users, we don't save anything until the end
+        if (user) {
+          await updateProfile(profileData);
+        }
         setCurrentStep(3);
       } catch (error) {
         console.error("Error saving activity level:", error);
@@ -149,7 +169,10 @@ const ProfileSetup = () => {
       try {
         const age = calculateAge(dateOfBirth);
         const profileData = { gender: selectedGender, age: age };
-        await updateProfile(profileData);
+        // For new users, we don't save anything until the end
+        if (user) {
+          await updateProfile(profileData);
+        }
         setCurrentStep(4);
       } catch (error) {
         console.error("Error saving personal info:", error);
@@ -185,7 +208,7 @@ const ProfileSetup = () => {
       try {
         const age = calculateAge(dateOfBirth);
         
-        // Send ALL profile data together
+        // Build complete profile data
         const profileData = {
           height: Math.round(heightInCm),
           currentWeight: Math.round(currentWeightKgValue * 10) / 10,
@@ -196,13 +219,27 @@ const ProfileSetup = () => {
           activityLevel: selectedActivityLevel,
         };
         
-        console.log("Step 4 - Sending complete profile data:", profileData);
-        await updateProfile(profileData);
-        
-        // For "maintain" goal, mark as complete and redirect
+        console.log("📝 Profile data ready:", profileData);
+
+        // For "maintain" goal, complete registration
         if (selectedGoal === "maintain") {
-          console.log("Maintain goal - profile complete, marking as completed");
-          setProfileCompleted(true);
+          if (user) {
+            // Existing user - update profile
+            profileData.profileSetupComplete = true;
+            await updateProfile(profileData);
+            console.log("✅ Existing user profile updated");
+            navigate("/user-dashboard", { replace: true });
+          } else {
+            // New user - finalize registration
+            console.log("🔄 Finalizing registration for new user...");
+            const result = await finalizeRegistration(profileData);
+            if (result.success) {
+              console.log("✅ New user registration completed");
+              navigate("/user-dashboard", { replace: true });
+            } else {
+              console.log("❌ Registration failed");
+            }
+          }
         } else {
           // For "lose" or "gain" goals, go to step 5
           setCurrentStep(5);
@@ -218,17 +255,53 @@ const ProfileSetup = () => {
       
       setIsSubmitting(true);
       try {
-        // For "lose" or "gain" goals, save weekly goal
-        const profileData = {
+        const age = calculateAge(dateOfBirth);
+        let heightInCm;
+        if (heightUnit === "imperial") {
+          heightInCm = feetInchesToCm(heightFeet, heightInches);
+        } else {
+          heightInCm = parseFloat(heightCm);
+        }
+        let currentWeightKgValue, targetWeightKgValue;
+        if (weightUnit === "imperial") {
+          currentWeightKgValue = lbsToKg(currentWeight);
+          targetWeightKgValue = lbsToKg(targetWeight);
+        } else {
+          currentWeightKgValue = parseFloat(currentWeightKg || 0);
+          targetWeightKgValue = parseFloat(targetWeightKg || 0);
+        }
+
+        // Build complete payload
+        const payload = {
+          height: Math.round(heightInCm),
+          currentWeight: Math.round(currentWeightKgValue * 10) / 10,
+          targetWeight: Math.round(targetWeightKgValue * 10) / 10,
+          age,
+          gender: selectedGender,
+          healthGoal: selectedGoal,
+          activityLevel: selectedActivityLevel,
           weeklyGoal: parseFloat(weeklyGoal),
+          profileSetupComplete: true,
         };
-        
-        console.log("Step 5 - Saving weekly goal:", profileData);
-        await updateProfile(profileData);
-        
-        console.log("Step 5 - Profile setup complete, marking as completed");
-        // Mark profile as completed and redirect
-        setProfileCompleted(true);
+
+        console.log("📝 Final payload:", payload);
+
+        if (user) {
+          // Existing user - update profile
+          await updateProfile(payload);
+          console.log("✅ Existing user profile completed");
+          navigate("/user-dashboard", { replace: true });
+        } else {
+          // New user - finalize registration
+          console.log("🔄 Finalizing registration for new user...");
+          const result = await finalizeRegistration(payload);
+          if (result.success) {
+            console.log("✅ New user registration completed");
+            navigate("/user-dashboard", { replace: true });
+          } else {
+            console.log("❌ Registration failed");
+          }
+        }
       } catch (error) {
         console.error("Error saving weekly goal:", error);
       } finally {

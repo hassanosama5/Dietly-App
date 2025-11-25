@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 
 const Dashboard = () => {
-  const { user, isProfileComplete, logout } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [scrolled, setScrolled] = useState(false);
 
@@ -157,11 +157,7 @@ const Dashboard = () => {
               {/* CTA Buttons */}
               <div className="flex items-center gap-4">
                 <Button
-                  onClick={() =>
-                    isProfileComplete
-                      ? navigate("/meal-plans/generate")
-                      : navigate("/profile-setup")
-                  }
+                  onClick={() => navigate("/meal-plans/generate")}
                   size="lg"
                   className="px-8 py-6 bg-gradient-to-r from-[#2F7A0A] to-[#246608] hover:shadow-2xl hover:shadow-[#246608]/30 transition-all duration-300 text-base font-semibold"
                 >
@@ -295,11 +291,7 @@ const Dashboard = () => {
             nutrition with Dietly AI.
           </p>
           <Button
-            onClick={() =>
-              isProfileComplete
-                ? navigate("/meal-plans/generate")
-                : navigate("/profile-setup")
-            }
+            onClick={() => navigate("/meal-plans/generate")}
             size="lg"
             className="px-12 py-7 bg-gradient-to-r from-[#2F7A0A] to-[#246608] hover:shadow-2xl hover:shadow-[#246608]/30 transition-all duration-300 text-lg font-bold"
           >

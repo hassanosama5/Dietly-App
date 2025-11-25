@@ -57,7 +57,7 @@ const Register = () => {
     setIsSubmitting(true);
 
     const { confirmPassword, ...registerData } = formData;
-    const result = await register(registerData);
+     const result = await register(registerData);
 
     if (result.success) navigate("/profile-setup", { replace: true });
     else setIsSubmitting(false);

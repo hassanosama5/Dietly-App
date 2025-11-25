@@ -8,67 +8,8 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isProfileComplete, setIsProfileComplete] = useState(false);
-
-  // Helper to check profile completeness
-  const checkProfileCompletion = (userData) => {
-    if (!userData) return false;
-
-    // Base required fields for all goals
-    const baseRequiredFields = [
-      "age",
-      "gender",
-      "height",
-      "currentWeight",
-      "targetWeight",
-      "healthGoal",
-      "activityLevel",
-    ];
-
-    // Check if all base fields are present
-    const hasBaseFields = baseRequiredFields.every(
-      (field) =>
-        userData[field] !== undefined &&
-        userData[field] !== null &&
-        userData[field] !== "" &&
-        !(typeof userData[field] === "number" && isNaN(userData[field]))
-    );
-
-    // If base fields are missing, profile is not complete
-    if (!hasBaseFields) {
-      setIsProfileComplete(false);
-      return false;
-    }
-
-    // Profile completion logic based on goal:
-    // - For "maintain": Complete after step 4 (when profileSetupComplete flag is set)
-    // - For "lose" or "gain": Complete after step 5 (when profileSetupComplete flag is set)
-    const healthGoal = userData.healthGoal;
-    
-    let isComplete = false;
-    
-    if (healthGoal === "maintain") {
-      // For "maintain" goal: Complete after step 4 (when profileSetupComplete is true)
-      isComplete = hasBaseFields && userData.profileSetupComplete === true;
-    } else if (healthGoal === "lose" || healthGoal === "gain") {
-      // For "lose" or "gain" goal: Complete after step 5
-      // Check if profileSetupComplete flag is set (indicates step 5 was completed)
-      isComplete = hasBaseFields && userData.profileSetupComplete === true;
-    } else {
-      // Default: Complete if base fields are present and setup is complete
-      isComplete = hasBaseFields && userData.profileSetupComplete === true;
-    }
-
-    console.log("Profile completion check:", {
-      healthGoal,
-      hasBaseFields,
-      profileSetupComplete: userData.profileSetupComplete,
-      isComplete
-    });
-
-    setIsProfileComplete(isComplete);
-    return isComplete;
-  };
+  const [justRegistered, setJustRegistered] = useState(false);
+  const [pendingRegistration, setPendingRegistration] = useState(null);
 
   // Fetch user on mount if token exists
   const fetchUser = async () => {
@@ -76,7 +17,6 @@ export const AuthProvider = ({ children }) => {
     if (!token) {
       setLoading(false);
       setUser(null);
-      setIsProfileComplete(false);
       return;
     }
 
@@ -84,17 +24,14 @@ export const AuthProvider = ({ children }) => {
       const res = await authService.getMe();
       if (res.data.success && res.data.data) {
         setUser(res.data.data);
-        checkProfileCompletion(res.data.data);
       } else {
         localStorage.removeItem("token");
         setUser(null);
-        setIsProfileComplete(false);
       }
     } catch (err) {
       console.error(err);
       localStorage.removeItem("token");
       setUser(null);
-      setIsProfileComplete(false);
     } finally {
       setLoading(false);
     }
@@ -108,7 +45,6 @@ export const AuthProvider = ({ children }) => {
       const token = localStorage.getItem("token");
       if (!token) {
         setUser(null);
-        setIsProfileComplete(false);
       }
     };
 
@@ -116,7 +52,7 @@ export const AuthProvider = ({ children }) => {
     return () => window.removeEventListener("storage", handleStorageChange);
   }, []);
 
-  // Register
+  // ADD THIS REGISTER FUNCTION HERE:
   const register = async (userData) => {
     try {
       setError(null);
@@ -125,7 +61,40 @@ export const AuthProvider = ({ children }) => {
         const { user: u, token } = res.data.data;
         localStorage.setItem("token", token);
         setUser(u);
-        checkProfileCompletion(u);
+        setJustRegistered(true);
+        return { success: true };
+      } else {
+        setError(res.data.message || "Registration failed");
+        return { success: false };
+      }
+    } catch (err) {
+      const msg = err.response?.data?.message || "Registration failed";
+      setError(msg);
+      return { success: false };
+    }
+  };
+
+  const beginRegistration = (userData) => {
+    setError(null);
+    setPendingRegistration(userData);
+    setJustRegistered(true);
+    return { success: true };
+  };
+
+  const finalizeRegistration = async (profileData) => {
+    try {
+      if (!pendingRegistration) {
+        return { success: false };
+      }
+      setError(null);
+      const payload = { ...pendingRegistration, ...profileData };
+      const res = await authService.register(payload);
+      if (res.data.success) {
+        const { user: u, token } = res.data.data;
+        localStorage.setItem("token", token);
+        setUser(u);
+        setJustRegistered(false);
+        setPendingRegistration(null);
         return { success: true };
       } else {
         setError(res.data.message || "Registration failed");
@@ -153,7 +122,6 @@ export const AuthProvider = ({ children }) => {
         const userRes = await authService.getMe();
         if (userRes.data.success) {
           setUser(userRes.data.data);
-          checkProfileCompletion(userRes.data.data);
         }
 
         setLoading(false);
@@ -174,7 +142,6 @@ export const AuthProvider = ({ children }) => {
       if (res.data.success) {
         const updated = res.data.data;
         setUser(updated);
-        checkProfileCompletion(updated);
         return { success: true };
       } else {
         setError(res.data.message || "Profile update failed");
@@ -196,8 +163,9 @@ export const AuthProvider = ({ children }) => {
     } finally {
       localStorage.removeItem("token");
       setUser(null);
-      setIsProfileComplete(false);
       setError(null);
+      setJustRegistered(false);
+      setPendingRegistration(null);
       // Optional: force redirect to guest
       window.location.href = "/guest";
     }
@@ -210,12 +178,15 @@ export const AuthProvider = ({ children }) => {
         loading,
         error,
         isAuthenticated: !!user,
-        isProfileComplete,
-        register,
+        justRegistered,
+        register, // ← ADD THIS LINE
+        beginRegistration,
+        finalizeRegistration,
         login,
         logout,
         updateProfile,
         clearError: () => setError(null),
+        clearJustRegistered: () => setJustRegistered(false),
       }}
     >
       {children}

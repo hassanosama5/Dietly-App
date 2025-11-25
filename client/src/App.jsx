@@ -22,15 +22,14 @@ import LoadingSpinner from "./components/common/LoadingSpinner";
 import DashboardLayout from "./components/layouts/DashboardLayout";
 
 // Route for logged-in users
-const ProtectedRoute = ({ children, allowIncompleteProfile = false }) => {
-  const { isAuthenticated, loading, isProfileComplete } = useAuth();
+const ProtectedRoute = ({ children, allowJustRegistered = false }) => {
+  const { isAuthenticated, loading, justRegistered } = useAuth();
 
-  if (loading || isProfileComplete === null) return <LoadingSpinner />;
+  if (loading) return <LoadingSpinner />;
 
-  if (!isAuthenticated) return <Navigate to="/" replace />;
-
-  if (!allowIncompleteProfile && !isProfileComplete) {
-    return <Navigate to="/profile-setup" replace />;
+  if (!isAuthenticated) {
+    if (allowJustRegistered && justRegistered) return children;
+    return <Navigate to="/" replace />;
   }
 
   return children;
@@ -38,11 +37,14 @@ const ProtectedRoute = ({ children, allowIncompleteProfile = false }) => {
 
 // Route for guests
 const GuestRoute = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, justRegistered } = useAuth();
 
   if (loading) return <LoadingSpinner />;
 
-  if (isAuthenticated) return <Navigate to="/user-dashboard" replace />;
+  if (isAuthenticated) {
+    if (justRegistered) return <Navigate to="/profile-setup" replace />;
+    return <Navigate to="/user-dashboard" replace />;
+  }
 
   return children;
 };
@@ -74,7 +76,7 @@ function App() {
             <Route
               path="/profile-setup"
               element={
-                <ProtectedRoute allowIncompleteProfile={true}>
+                <ProtectedRoute allowJustRegistered={true}>
                   <ProfileSetup />
                 </ProtectedRoute>
               }
