@@ -56,7 +56,7 @@ const MealPlans = () => {
 
   if (view === "generate") {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 font-poppins">
         <MealPlanGenerator
           onPlanGenerated={handlePlanGenerated}
           onCancel={() => setView("list")}
@@ -65,30 +65,37 @@ const MealPlans = () => {
     );
   }
 
-  // Route-based view is handled by App.jsx at /meal-plans/view/:id
-
   return (
     <div className="min-h-screen bg-gray-50 p-6 font-poppins">
       <div className="max-w-7xl mx-auto">
+        {/* Header + Button */}
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-gray-900">Meal Plans</h1>
-          {activePlan ? (
+          {mealPlans.length === 0 ? (
+            <button
+              onClick={() => setView("generate")}
+              className="px-6 py-3 bg-[#246608] text-white rounded-md hover:bg-green-700"
+            >
+              Generate Your First Meal Plan
+            </button>
+          ) : activePlan ? (
             <button
               onClick={stopActivePlan}
-              className="px-6 py-3 bg-red-600 text-white rounded-md hover:bg-red-700"
+              className="px-6 py-3 bg-[#246608] text-white rounded-md hover:bg-green-700"
             >
               Stop Current Plan
             </button>
           ) : (
             <button
               onClick={() => setView("generate")}
-              className="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              className="px-6 py-3 bg-[#246608] text-white rounded-md hover:bg-green-700"
             >
-              Generate New Plan
+              Generate Plan
             </button>
           )}
         </div>
 
+        {/* Content */}
         {loading ? (
           <LoadingSpinner />
         ) : mealPlans.length > 0 ? (
@@ -142,12 +149,6 @@ const MealPlans = () => {
         ) : (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
             <p className="text-gray-500 mb-4">No meal plans yet</p>
-            <button
-              onClick={() => setView("generate")}
-              className="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-            >
-              Generate Your First Meal Plan
-            </button>
           </div>
         )}
       </div>

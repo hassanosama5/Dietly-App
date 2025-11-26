@@ -51,6 +51,143 @@ const GuestRoute = ({ children }) => {
   return children;
 };
 
+// Public route - accessible to both guests and logged-in users
+const PublicRoute = ({ children }) => {
+  const { isAuthenticated, loading, justRegistered } = useAuth();
+
+  if (loading) return <LoadingSpinner />;
+
+  // If user is authenticated and just registered, redirect to profile setup
+  if (isAuthenticated && justRegistered) {
+    return <Navigate to="/profile-setup" replace />;
+  }
+
+  return children;
+};
+
+// Guest Layout component with navbar
+const GuestLayout = ({ children }) => {
+  const [scrolled, setScrolled] = React.useState(false);
+
+  React.useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 50);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  return (
+    <div className="min-h-screen bg-white text-black">
+      {/* Navigation */}
+      <nav
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+          scrolled
+            ? "bg-[#246608]/95 backdrop-blur-xl border-b border-white/[0.05]"
+            : "bg-transparent"
+        }`}
+      >
+        <div className="max-w-[1200px] mx-auto px-8">
+          <div className="flex items-center justify-between h-20">
+            {/* Logo */}
+            <div
+              className="flex items-center space-x-6 cursor-pointer"
+              onClick={() => (window.location.href = "/dashboard")}
+            >
+              <img
+                src={scrolled ? "/logo-white.png" : "/logo-green.png"}
+                alt="Logo"
+                className="w-24 h-24 md:w-32 md:h-32"
+              />
+            </div>
+
+            {/* Nav Links */}
+            <div className="hidden md:flex items-center space-x-6">
+              <button
+                onClick={() => (window.location.href = "/meals")}
+                className={`
+                  text-base font-medium transition-colors duration-300
+                  ${
+                    scrolled
+                      ? "text-white hover:text-yellow-200 hover:bg-white/5"
+                      : "text-black hover:text-gray-600 hover:bg-gray-100"
+                  }
+                  font-poppins px-4 py-2 rounded-lg
+                `}
+              >
+                Browse Meals
+              </button>
+              <button
+                onClick={() => (window.location.href = "/login")}
+                className={`
+                  text-base font-medium transition-colors duration-300
+                  ${
+                    scrolled
+                      ? "text-white hover:text-yellow-200 hover:bg-white/5"
+                      : "text-black hover:text-gray-600 hover:bg-gray-100"
+                  }
+                  font-poppins px-4 py-2 rounded-lg
+                `}
+              >
+                Login
+              </button>
+              <button
+                onClick={() => (window.location.href = "/register")}
+                className={`
+                  text-base font-medium transition-colors duration-300
+                  ${
+                    scrolled
+                      ? "text-white hover:text-yellow-200 hover:bg-white/5"
+                      : "text-black hover:text-gray-600 hover:bg-gray-100"
+                  }
+                  font-poppins px-4 py-2 rounded-lg
+                `}
+              >
+                Register
+              </button>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      {/* Main Content */}
+      <div className="pt-20">
+        {" "}
+        {/* Add padding to account for fixed navbar */}
+        {children}
+      </div>
+    </div>
+  );
+};
+
+// Component to conditionally wrap meals in appropriate layout
+const MealsRoute = () => {
+  const { isAuthenticated } = useAuth();
+
+  return isAuthenticated ? (
+    <DashboardLayout>
+      <Meals />
+    </DashboardLayout>
+  ) : (
+    <GuestLayout>
+      <Meals />
+    </GuestLayout>
+  );
+};
+
+// Component to conditionally wrap meal detail in appropriate layout
+const MealDetailRoute = () => {
+  const { isAuthenticated } = useAuth();
+
+  return isAuthenticated ? (
+    <DashboardLayout>
+      <MealDetailPage />
+    </DashboardLayout>
+  ) : (
+    <GuestLayout>
+      <MealDetailPage />
+    </GuestLayout>
+  );
+};
+
 function App() {
   return (
     <AuthProvider>
@@ -74,6 +211,7 @@ function App() {
                 </GuestRoute>
               }
             />
+
             {/* Profile Setup */}
             <Route
               path="/profile-setup"
@@ -83,28 +221,30 @@ function App() {
                 </ProtectedRoute>
               }
             />
+
             {/* Profile Page */}
-<Route
-  path="/profile"
-  element={
-    <ProtectedRoute>
-      <DashboardLayout>
-        <Profile />
-      </DashboardLayout>
-    </ProtectedRoute>
-  }
-/>
-{/* Settings Page */}
-<Route
-  path="/settings"
-  element={
-    <ProtectedRoute>
-      <DashboardLayout>
-        <Settings />
-      </DashboardLayout>
-    </ProtectedRoute>
-  }
-/>
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <Profile />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Settings Page */}
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <Settings />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
 
             {/* Guest Dashboard */}
             <Route
@@ -126,27 +266,25 @@ function App() {
               }
             />
 
-            {/* Other protected pages */}
+            {/* Public Meal Pages - Accessible without authorization */}
             <Route
               path="/meals"
               element={
-                <ProtectedRoute>
-                  <DashboardLayout>
-                    <Meals />
-                  </DashboardLayout>
-                </ProtectedRoute>
+                <PublicRoute>
+                  <MealsRoute />
+                </PublicRoute>
               }
             />
             <Route
               path="/meals/:id"
               element={
-                <ProtectedRoute>
-                  <DashboardLayout>
-                    <MealDetailPage />
-                  </DashboardLayout>
-                </ProtectedRoute>
+                <PublicRoute>
+                  <MealDetailRoute />
+                </PublicRoute>
               }
             />
+
+            {/* Other protected pages */}
             <Route
               path="/progress"
               element={

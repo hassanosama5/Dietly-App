@@ -61,7 +61,6 @@ const Profile = () => {
 
   const handleLogout = () => {
     logout();
-    navigate("/login");
   };
 
   return (
@@ -360,7 +359,9 @@ const Profile = () => {
                   <p className="text-sm text-gray-600">Progress</p>
                   <p className="text-lg font-bold text-gray-900">
                     {user?.currentWeight && user?.targetWeight
-                      ? Math.abs(user.currentWeight - user.targetWeight).toFixed(1)
+                      ? Math.abs(
+                          user.currentWeight - user.targetWeight
+                        ).toFixed(1)
                       : "N/A"}{" "}
                     kg to go
                   </p>

@@ -14,17 +14,81 @@ import {
   Microscope,
   CheckCircle,
   Shield,
+  Calculator,
+  Scale,
+  Heart,
+  ChefHat,
+  BookOpen,
+  Utensils,
 } from "lucide-react";
 
 const DashboardGuest = () => {
   const navigate = useNavigate();
   const [scrolled, setScrolled] = useState(false);
+  const [bmiData, setBmiData] = useState({
+    weight: "",
+    height: "",
+    bmi: null,
+    category: "",
+  });
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  const calculateBMI = () => {
+    const weight = parseFloat(bmiData.weight);
+    const height = parseFloat(bmiData.height) / 100; // Convert cm to meters
+
+    if (weight && height) {
+      const bmi = weight / (height * height);
+      let category = "";
+
+      if (bmi < 18.5) category = "Underweight";
+      else if (bmi < 25) category = "Normal weight";
+      else if (bmi < 30) category = "Overweight";
+      else category = "Obese";
+
+      setBmiData({
+        ...bmiData,
+        bmi: bmi.toFixed(1),
+        category,
+      });
+    }
+  };
+
+  const resetBMI = () => {
+    setBmiData({
+      weight: "",
+      height: "",
+      bmi: null,
+      category: "",
+    });
+  };
+
+  const getBMIColor = (bmi) => {
+    if (!bmi) return "text-gray-500";
+    if (bmi < 18.5) return "text-blue-500";
+    if (bmi < 25) return "text-green-500";
+    if (bmi < 30) return "text-orange-500";
+    return "text-red-500";
+  };
+
+  const getBMIBarColor = (bmi) => {
+    if (!bmi) return "bg-gray-200";
+    if (bmi < 18.5) return "bg-blue-500";
+    if (bmi < 25) return "bg-green-500";
+    if (bmi < 30) return "bg-orange-500";
+    return "bg-red-500";
+  };
+
+  const getBMIPosition = (bmi) => {
+    if (!bmi) return "0%";
+    const position = Math.min(Math.max(((bmi - 15) / 15) * 100, 0), 100);
+    return `${position}%`;
+  };
 
   return (
     <div className="min-h-screen bg-white text-black">
@@ -50,18 +114,34 @@ const DashboardGuest = () => {
             {/* Nav Links */}
             <div className="hidden md:flex items-center space-x-6">
               <Button
+                onClick={() => navigate("/meals")}
+                variant="ghost"
+                size="sm"
+                className={`
+                  text-base font-medium transition-colors duration-300
+                  ${
+                    scrolled
+                      ? "text-white hover:text-yellow-200 hover:bg-white/5"
+                      : "text-black hover:text-gray-600 hover:bg-gray-100"
+                  }
+                  font-poppins
+                `}
+              >
+                Browse Meals
+              </Button>
+              <Button
                 onClick={() => navigate("/login")}
                 variant="ghost"
                 size="sm"
                 className={`
-                    text-base font-medium transition-colors duration-300
-                    ${
-                      scrolled
-                        ? "text-gray-400 hover:text-white hover:bg-white/5"
-                        : "text-black hover:text-gray-600 hover:bg-gray-100"
-                    }
-                    font-poppins
-                  `}
+                  text-base font-medium transition-colors duration-300
+                  ${
+                    scrolled
+                      ? "text-white hover:text-yellow-200 hover:bg-white/5"
+                      : "text-black hover:text-gray-600 hover:bg-gray-100"
+                  }
+                  font-poppins
+                `}
               >
                 Login
               </Button>
@@ -70,14 +150,14 @@ const DashboardGuest = () => {
                 variant="ghost"
                 size="sm"
                 className={`
-                    text-base font-medium transition-colors duration-300
-                    ${
-                      scrolled
-                        ? "text-gray-400 hover:text-white hover:bg-white/5"
-                        : "text-black hover:text-gray-600 hover:bg-gray-100"
-                    }
-                    font-poppins
-                  `}
+                  text-base font-medium transition-colors duration-300
+                  ${
+                    scrolled
+                      ? "text-white hover:text-yellow-200 hover:bg-white/5"
+                      : "text-black hover:text-gray-600 hover:bg-gray-100"
+                  }
+                  font-poppins
+                `}
               >
                 Register
               </Button>
@@ -86,6 +166,7 @@ const DashboardGuest = () => {
         </div>
       </nav>
 
+      {/* ==================== HERO SECTION ==================== */}
       {/* ==================== HERO SECTION ==================== */}
       <section className="relative pt-32 pb-24">
         <div className="max-w-[1200px] mx-auto px-8">
@@ -117,12 +198,53 @@ const DashboardGuest = () => {
                 </p>
               </div>
 
+              {/* Additional Content */}
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="space-y-2">
+                    <div className="w-12 h-12 bg-[#246608]/10 rounded-full flex items-center justify-center">
+                      <TrendingUp className="w-6 h-6 text-[#246608]" />
+                    </div>
+                    <h3 className="font-semibold text-gray-800">
+                      Personalized Plans
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      AI-generated meal plans tailored to your goals
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="w-12 h-12 bg-[#246608]/10 rounded-full flex items-center justify-center">
+                      <Users className="w-6 h-6 text-[#246608]" />
+                    </div>
+                    <h3 className="font-semibold text-gray-800">
+                      Expert Guidance
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      Nutritionist-approved recipes and tips
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="w-12 h-12 bg-[#246608]/10 rounded-full flex items-center justify-center">
+                      <Award className="w-6 h-6 text-[#246608]" />
+                    </div>
+                    <h3 className="font-semibold text-gray-800">
+                      Proven Results
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      Thousands of success stories
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               {/* CTA Buttons */}
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-4 flex-wrap">
                 <Button
                   onClick={() => navigate("/register")}
                   size="lg"
-                  className="px-8 py-6 bg-[#246608] hover:opacity-80 transition-all duration-300 text-base font-semibold"
+                  className="px-8 py-6 bg-[#246608] hover:bg-[#1a4a06] transition-all duration-300 text-base font-semibold"
                 >
                   <TrendingUp className="w-5 h-5 mr-2" />
                   START YOUR JOURNEY
@@ -137,7 +259,6 @@ const DashboardGuest = () => {
                   onClick={() => {
                     const section = document.getElementById("how");
                     if (section) {
-                      // Adjust offset for fixed navbar (e.g., 80px height)
                       const yOffset = -120;
                       const y =
                         section.getBoundingClientRect().top +
@@ -149,13 +270,376 @@ const DashboardGuest = () => {
                 >
                   HOW IT WORKS
                 </Button>
+
+                <Button
+                  size="lg"
+                  className="px-8 py-6 bg-gradient-to-r from-[#246608] to-[#2F7A0A] hover:from-[#1a4a06] hover:to-[#246608] transition-all duration-300 text-base font-semibold text-white"
+                  onClick={() => {
+                    const section = document.getElementById("bmi-calculator");
+                    if (section) {
+                      const yOffset = -80;
+                      const y =
+                        section.getBoundingClientRect().top +
+                        window.pageYOffset +
+                        yOffset;
+                      window.scrollTo({ top: y, behavior: "smooth" });
+                    }
+                  }}
+                >
+                  <Calculator className="w-5 h-5 mr-2" />
+                  FREE BMI CALCULATOR
+                </Button>
+              </div>
+
+              {/* Trust Indicator */}
+              <div className="pt-4">
+                <p className="text-sm text-gray-500">
+                  Trusted by 10,000+ users • 4.9/5 rating • Nutritionist
+                  approved
+                </p>
               </div>
             </div>
 
-            {/* Right Column - Data Visualization */}
-            <div className="flex items-center justify-center">
-              <div className="bg-[#F6F9F6] border border-[#246608]/10 rounded-3xl shadow-2xl p-12">
-                <CircularProgress value={`80 kg`} label="Sample Weight" />
+            {/* Right Column - Success Stories */}
+            <div className="space-y-8">
+              <div className="bg-gradient-to-br from-[#246608] to-[#2F7A0A] rounded-2xl p-8 text-white">
+                <div className="space-y-6">
+                  <div className="text-center">
+                    <div className="text-5xl font-bold text-yellow-300 mb-2">
+                      1000+
+                    </div>
+                    <div className="text-2xl font-semibold">
+                      Success Stories
+                    </div>
+                    <p className="text-white/80 mt-2">
+                      Real people, real results
+                    </p>
+                  </div>
+
+                  {/* Success Story Cards */}
+                  <div className="space-y-4">
+                    <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm border border-white/20">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="w-10 h-10 bg-yellow-300 rounded-full flex items-center justify-center">
+                          <span className="text-[#246608] font-bold">S</span>
+                        </div>
+                        <div>
+                          <div className="font-semibold">Sarah M.</div>
+                          <div className="text-white/70 text-sm">
+                            Lost 15kg in 3 months
+                          </div>
+                        </div>
+                      </div>
+                      <p className="text-white/90 text-sm italic">
+                        "The personalized meal plans made weight loss so much
+                        easier. I never felt deprived!"
+                      </p>
+                    </div>
+
+                    <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm border border-white/20">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="w-10 h-10 bg-yellow-300 rounded-full flex items-center justify-center">
+                          <span className="text-[#246608] font-bold">J</span>
+                        </div>
+                        <div>
+                          <div className="font-semibold">James T.</div>
+                          <div className="text-white/70 text-sm">
+                            Gained 8kg muscle
+                          </div>
+                        </div>
+                      </div>
+                      <p className="text-white/90 text-sm italic">
+                        "Finally found a meal plan that actually helped me build
+                        muscle without guesswork."
+                      </p>
+                    </div>
+
+                    <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm border border-white/20">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="w-10 h-10 bg-yellow-300 rounded-full flex items-center justify-center">
+                          <span className="text-[#246608] font-bold">M</span>
+                        </div>
+                        <div>
+                          <div className="font-semibold">Maria L.</div>
+                          <div className="text-white/70 text-sm">
+                            Maintained for 1+ year
+                          </div>
+                        </div>
+                      </div>
+                      <p className="text-white/90 text-sm italic">
+                        "The ongoing support and recipe variety helped me
+                        maintain my goal weight effortlessly."
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="text-center pt-4 border-t border-white/20">
+                    <p className="text-sm text-white/80">
+                      Join our community of success stories today
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ==================== BMI CALCULATOR SECTION ==================== */}
+      <section
+        id="bmi-calculator"
+        className="relative py-20 bg-gradient-to-br from-gray-50 to-white"
+      >
+        <div className="max-w-[1200px] mx-auto px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            {/* Left Column - Calculator */}
+            <div className="space-y-8">
+              <div className="space-y-6">
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#246608]/10 border border-[#246608]/20 rounded-full">
+                  <Calculator className="w-4 h-4 text-[#246608]" />
+                  <span className="text-xs font-semibold text-[#246608] tracking-widest">
+                    FREE HEALTH TOOL
+                  </span>
+                </div>
+
+                <h2 className="text-4xl font-bold text-gray-800">
+                  Check Your BMI
+                </h2>
+                <p className="text-lg text-gray-600">
+                  Calculate your Body Mass Index and get personalized insights
+                  about your health status.
+                </p>
+              </div>
+
+              <div className="space-y-6 bg-white rounded-2xl p-8 border border-gray-200 shadow-sm">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Weight (kg)
+                    </label>
+                    <input
+                      type="number"
+                      value={bmiData.weight}
+                      onChange={(e) =>
+                        setBmiData({ ...bmiData, weight: e.target.value })
+                      }
+                      placeholder="70"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#246608] focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Height (cm)
+                    </label>
+                    <input
+                      type="number"
+                      value={bmiData.height}
+                      onChange={(e) =>
+                        setBmiData({ ...bmiData, height: e.target.value })
+                      }
+                      placeholder="175"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#246608] focus:border-transparent"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex gap-4">
+                  <Button
+                    onClick={calculateBMI}
+                    className="flex-1 bg-[#246608] hover:bg-[#1a4a06]"
+                    disabled={!bmiData.weight || !bmiData.height}
+                  >
+                    <Scale className="w-4 h-4 mr-2" />
+                    Calculate BMI
+                  </Button>
+                  <Button
+                    onClick={resetBMI}
+                    variant="outline"
+                    className="border-[#246608] text-[#246608] hover:bg-[#246608]/10"
+                  >
+                    Reset
+                  </Button>
+                </div>
+
+                {/* BMI Result */}
+                {bmiData.bmi && (
+                  <div className="space-y-4 p-6 bg-gray-50 rounded-lg border border-gray-200">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-gray-800">
+                        Your BMI:{" "}
+                        <span className={getBMIColor(bmiData.bmi)}>
+                          {bmiData.bmi}
+                        </span>
+                      </div>
+                      <div className="text-lg font-semibold text-gray-600 mt-2">
+                        {bmiData.category}
+                      </div>
+                    </div>
+
+                    {/* BMI Scale Visualization */}
+                    <div className="space-y-3">
+                      <div className="flex justify-between text-xs text-gray-500">
+                        <span>Underweight</span>
+                        <span>Normal</span>
+                        <span>Overweight</span>
+                        <span>Obese</span>
+                      </div>
+                      <div className="relative h-4 bg-gray-200 rounded-full overflow-hidden">
+                        <div className="absolute inset-0 flex">
+                          <div className="flex-1 bg-blue-400"></div>
+                          <div className="flex-1 bg-green-400"></div>
+                          <div className="flex-1 bg-orange-400"></div>
+                          <div className="flex-1 bg-red-400"></div>
+                        </div>
+                        <div
+                          className={`absolute top-0 w-2 h-4 ${getBMIBarColor(
+                            bmiData.bmi
+                          )} rounded-full -ml-1`}
+                          style={{ left: getBMIPosition(bmiData.bmi) }}
+                        ></div>
+                      </div>
+                      <div className="flex justify-between text-xs text-gray-500">
+                        <span>{"<18.5"}</span>
+                        <span>18.5-25</span>
+                        <span>25-30</span>
+                        <span>{">30"}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Right Column - BMI Information */}
+            <div className="space-y-6">
+              <div className="bg-gradient-to-br from-[#246608] to-[#2F7A0A] rounded-2xl p-8 text-white">
+                <div className="space-y-6">
+                  <h3 className="text-2xl font-bold">What is BMI?</h3>
+                  <p className="text-white/90 leading-relaxed">
+                    Body Mass Index (BMI) is a simple calculation using a
+                    person's height and weight. It's a useful screening tool to
+                    identify potential weight problems for adults.
+                  </p>
+
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3">
+                      <Heart className="w-5 h-5 text-yellow-300" />
+                      <span>Helps assess health risks</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Scale className="w-5 h-5 text-yellow-300" />
+                      <span>Simple and quick calculation</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <TrendingUp className="w-5 h-5 text-yellow-300" />
+                      <span>Track your progress over time</span>
+                    </div>
+                  </div>
+
+                  <div className="pt-4 border-t border-white/20">
+                    <p className="text-sm text-white/80">
+                      For personalized meal plans and detailed health tracking,
+                      create your free account.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ==================== MEAL LIBRARY ADVERTISEMENT ==================== */}
+      <section className="relative py-20 bg-gradient-to-br from-[#246608] to-[#2F7A0A] text-white">
+        <div className="max-w-[1200px] mx-auto px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            {/* Left Column - Content */}
+            <div className="space-y-8">
+              <div className="space-y-6">
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/20 rounded-full backdrop-blur-sm">
+                  <ChefHat className="w-4 h-4" />
+                  <span className="text-sm font-semibold tracking-widest">
+                    EXPLORE OUR COLLECTION
+                  </span>
+                </div>
+
+                <h2 className="text-5xl font-bold leading-tight">
+                  Discover Our
+                  <br />
+                  <span className="text-yellow-300">400+ Meal</span>
+                  <br />
+                  Recipe Library
+                </h2>
+
+                <p className="text-lg text-white/90 leading-relaxed">
+                  From quick weekday dinners to gourmet diet recipes, find
+                  perfect meals for every occasion. All nutritionist-approved
+                  and calorie-controlled for your goals.
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center gap-4 text-sm">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="w-5 h-5 text-yellow-300" />
+                    <span>Regular & Diet Options</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="w-5 h-5 text-yellow-300" />
+                    <span>AI-Personalized</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4 text-sm">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="w-5 h-5 text-yellow-300" />
+                    <span>Quick & Easy Recipes</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="w-5 h-5 text-yellow-300" />
+                    <span>Nutritionist Approved</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4">
+                <Button
+                  onClick={() => navigate("/meals")}
+                  size="lg"
+                  className="px-8 py-6 bg-white text-[#246608] hover:bg-gray-100 hover:shadow-2xl transition-all duration-300 font-bold"
+                >
+                  <BookOpen className="w-5 h-5 mr-2" />
+                  BROWSE MEAL LIBRARY
+                </Button>
+              </div>
+            </div>
+
+            {/* Right Column - Visual */}
+            <div className="relative">
+              <div className="bg-white/10 rounded-2xl p-8 backdrop-blur-sm border border-white/20">
+                <div className="grid grid-cols-2 gap-4">
+                  {/* Meal preview cards */}
+                  {[1, 2, 3, 4].map((item) => (
+                    <div
+                      key={item}
+                      className="bg-white/5 rounded-lg p-4 border border-white/10 hover:bg-white/10 transition-all duration-300"
+                    >
+                      <div className="w-full h-24 bg-white/10 rounded mb-3 flex items-center justify-center">
+                        <Utensils className="w-8 h-8 text-white/60" />
+                      </div>
+                      <div className="text-center">
+                        <div className="text-sm font-semibold text-white">
+                          Premium Meal #{item}
+                        </div>
+                        <div className="text-xs text-white/60">350-550 cal</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-6 text-center">
+                  <div className="text-3xl font-bold text-yellow-300">400+</div>
+                  <div className="text-white/80">Recipes Available</div>
+                </div>
               </div>
             </div>
           </div>
