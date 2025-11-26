@@ -27,6 +27,7 @@ import {
   Droplets,
   BarChart3,
   Lightbulb,
+  MessageCircle,
 } from "lucide-react";
 
 const Dashboard = () => {
@@ -255,6 +256,23 @@ const Dashboard = () => {
               >
                 My Plans
               </Button>
+              <Button
+                onClick={() => navigate("/chatbot")}
+                variant="ghost"
+                size="sm"
+                className={`
+    text-base font-medium transition-colors duration-300
+    ${
+      scrolled
+        ? "text-white hover:text-yellow-200 hover:bg-white/5"
+        : "text-black hover:text-gray-600 hover:bg-gray-100"
+    }
+    font-poppins
+  `}
+              >
+                <MessageCircle className="w-4 h-4 mr-1" />
+                AI Coach
+              </Button>
 
               <div className="relative" ref={dropdownRef}>
                 <Button
@@ -377,16 +395,6 @@ const Dashboard = () => {
                 >
                   <TrendingUp className="w-5 h-5 mr-2" />
                   TRACK PROGRESS
-                </Button>
-
-                <Button
-                  onClick={handleGeneratePlanNavigation}
-                  variant="outline"
-                  size="lg"
-                  className="px-6 py-4 border-2 border-[#246608] text-[#246608] hover:bg-[#246608]/10 transition-all duration-300"
-                >
-                  <Utensils className="w-5 h-5 mr-2" />
-                  NEW MEAL PLAN
                 </Button>
               </div>
             </div>

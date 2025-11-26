@@ -1,28 +1,20 @@
 const express = require("express");
 const cors = require("cors");
-const {
-  errorHandler,
-  notFound
-} = require('./middleware/error');
-const {
-  securityHeaders,
-  sanitizeData
-} = require('./middleware/security');
-const {
-  generalLimiter,
-  authLimiter
-} = require('./middleware/rateLimit');
+const { errorHandler, notFound } = require("./middleware/error");
+const { securityHeaders, sanitizeData } = require("./middleware/security");
+const { generalLimiter, authLimiter } = require("./middleware/rateLimit");
 
 const app = express();
 
 // Import route files
-const authRoutes = require('./routes/authRoutes');
-const userRoutes = require('./routes/userRoutes');
-const mealRoutes = require('./routes/mealRoutes');
-const mealPlanRoutes = require('./routes/mealPlanRoutes');
-const progressRoutes = require('./routes/progressRoutes');
-const recommendationRoutes = require('./routes/recommendationRoutes');
-const adminRoutes = require('./routes/adminRoutes');
+const authRoutes = require("./routes/authRoutes");
+const userRoutes = require("./routes/userRoutes");
+const mealRoutes = require("./routes/mealRoutes");
+const mealPlanRoutes = require("./routes/mealPlanRoutes");
+const progressRoutes = require("./routes/progressRoutes");
+const recommendationRoutes = require("./routes/recommendationRoutes");
+const adminRoutes = require("./routes/adminRoutes");
+const chatbotRoutes = require("./routes/chatbotRoutes"); // Add this line
 
 // ==================== MIDDLEWARE SETUP ====================
 
@@ -33,7 +25,7 @@ app.use(sanitizeData);
 
 // Rate limiting (AFTER security, BEFORE routes)
 app.use(generalLimiter);
-app.use('/api/v1/auth', authLimiter);
+app.use("/api/v1/auth", authLimiter);
 
 // Body parsing middleware
 app.use(express.json());
@@ -46,13 +38,14 @@ app.get("/api/health", (req, res) => {
 });
 
 // Mount routers
-app.use('/api/v1/auth', authRoutes);
-app.use('/api/v1/users', userRoutes);
-app.use('/api/v1/meals', mealRoutes);
-app.use('/api/v1/meal-plans', mealPlanRoutes);
-app.use('/api/v1/progress', progressRoutes);
-app.use('/api/v1/recommendations', recommendationRoutes);
-app.use('/api/v1/admin', adminRoutes);
+app.use("/api/v1/auth", authRoutes);
+app.use("/api/v1/users", userRoutes);
+app.use("/api/v1/meals", mealRoutes);
+app.use("/api/v1/meal-plans", mealPlanRoutes);
+app.use("/api/v1/progress", progressRoutes);
+app.use("/api/v1/recommendations", recommendationRoutes);
+app.use("/api/v1/admin", adminRoutes);
+app.use("/api/v1/chatbot", chatbotRoutes); // Add this line
 
 // ==================== ERROR HANDLING ====================
 

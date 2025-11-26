@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { Button } from "../ui/button";
-import { User, Settings, LogOut } from "lucide-react";
+import { User, Settings, LogOut, MessageCircle } from "lucide-react";
 
 const DashboardLayout = ({ children }) => {
   const { user, logout } = useAuth();
@@ -120,7 +120,24 @@ const DashboardLayout = ({ children }) => {
               >
                 My Plans
               </Button>
-
+              {/* Add this with your other nav buttons */}
+              <Button
+                onClick={() => navigate("/chatbot")}
+                variant="ghost"
+                size="sm"
+                className={`
+    text-base font-medium transition-colors duration-300
+    ${
+      scrolled
+        ? "text-white hover:text-yellow-200 hover:bg-white/5"
+        : "text-black hover:text-gray-600 hover:bg-gray-100"
+    }
+    font-poppins flex items-center space-x-1
+  `}
+              >
+                <MessageCircle className="w-4 h-4" />
+                <span>AI Coach</span>
+              </Button>
               {/* Profile Dropdown */}
               <div className="relative" ref={dropdownRef}>
                 <Button

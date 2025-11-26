@@ -20,6 +20,7 @@ import MealDetailPage from "./pages/MealDetailPage";
 import Progress from "./pages/Progress";
 import MealPlans from "./pages/MealPlans";
 import MealPlanView from "./components/meal-plans/MealPlanView";
+import Chatbot from "./pages/Chatbot"; // Add this import
 import LoadingSpinner from "./components/common/LoadingSpinner";
 import DashboardLayout from "./components/layouts/DashboardLayout";
 
@@ -241,6 +242,18 @@ function App() {
                 <ProtectedRoute>
                   <DashboardLayout>
                     <Settings />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Chatbot Page - PROTECTED (Logged-in users only) */}
+            <Route
+              path="/chatbot"
+              element={
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <Chatbot />
                   </DashboardLayout>
                 </ProtectedRoute>
               }
