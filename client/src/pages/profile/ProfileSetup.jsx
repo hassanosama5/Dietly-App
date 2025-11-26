@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { Button } from "../../components/ui/button";
-import { Calendar } from "lucide-react";
 
 const ProfileSetup = () => {
   const { user, updateProfile, finalizeRegistration, loading, clearJustRegistered } = useAuth();
@@ -12,18 +11,18 @@ const ProfileSetup = () => {
   const [selectedGoal, setSelectedGoal] = useState("");
   const [selectedActivityLevel, setSelectedActivityLevel] = useState("");
   const [selectedGender, setSelectedGender] = useState("");
-  const [dateOfBirth, setDateOfBirth] = useState("");
+  const [age, setAge] = useState("");
   const [country, setCountry] = useState("Egypt");
   const [heightFeet, setHeightFeet] = useState("");
   const [heightInches, setHeightInches] = useState("");
   const [heightCm, setHeightCm] = useState("");
   const [currentWeight, setCurrentWeight] = useState("");
   const [targetWeight, setTargetWeight] = useState("");
-  const [currentWeightKg, setCurrentWeightKg] = useState(""); // Store in kg for metric
-  const [targetWeightKg, setTargetWeightKg] = useState(""); // Store in kg for metric
-  const [heightUnit, setHeightUnit] = useState("imperial"); // "imperial" or "metric"
-  const [weightUnit, setWeightUnit] = useState("imperial"); // "imperial" or "metric"
-  const [weeklyGoal, setWeeklyGoal] = useState(""); // Weekly weight change goal
+  const [currentWeightKg, setCurrentWeightKg] = useState("");
+  const [targetWeightKg, setTargetWeightKg] = useState("");
+  const [heightUnit, setHeightUnit] = useState("imperial");
+  const [weightUnit, setWeightUnit] = useState("imperial");
+  const [weeklyGoal, setWeeklyGoal] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -33,11 +32,10 @@ const ProfileSetup = () => {
   // Set default weekly goal when step 5 is reached
   useEffect(() => {
     if (currentStep === 5 && !weeklyGoal && selectedGoal) {
-      // Set recommended option as default
       if (selectedGoal === "lose" || selectedGoal === "gain") {
-        setWeeklyGoal("0.25"); // Recommended for lose/gain
+        setWeeklyGoal("0.25");
       } else {
-        setWeeklyGoal("0"); // Recommended for maintain
+        setWeeklyGoal("0");
       }
     }
   }, [currentStep, selectedGoal, weeklyGoal]);
@@ -79,7 +77,6 @@ const ProfileSetup = () => {
 
   const handleGoalSelect = (goalValue) => {
     setSelectedGoal(goalValue);
-    // Reset weekly goal if user changes goal to maintain
     if (goalValue === "maintain") {
       setWeeklyGoal("");
     }
@@ -87,17 +84,6 @@ const ProfileSetup = () => {
 
   const handleActivityLevelSelect = (activityValue) => {
     setSelectedActivityLevel(activityValue);
-  };
-
-  const calculateAge = (birthDate) => {
-    const today = new Date();
-    const birth = new Date(birthDate);
-    let age = today.getFullYear() - birth.getFullYear();
-    const monthDiff = today.getMonth() - birth.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-      age--;
-    }
-    return age;
   };
 
   // Convert feet and inches to cm
@@ -130,7 +116,6 @@ const ProfileSetup = () => {
       if (!selectedGoal) {
         return;
       }
-      // Save goal and move to next step
       setIsSubmitting(true);
       if (user) {
         const profileData = { healthGoal: selectedGoal };
@@ -138,7 +123,6 @@ const ProfileSetup = () => {
       }
       setIsSubmitting(false);
       setCurrentStep(2);
-      // Reset weekly goal if goal is "maintain"
       if (selectedGoal === "maintain") {
         setWeeklyGoal("");
       }
@@ -147,7 +131,6 @@ const ProfileSetup = () => {
       if (!selectedActivityLevel) {
         return;
       }
-      // Save activity level and move to next step
       setIsSubmitting(true);
       if (user) {
         const profileData = { activityLevel: selectedActivityLevel };
@@ -157,31 +140,52 @@ const ProfileSetup = () => {
       setCurrentStep(3);
     } else if (currentStep === 3) {
       // Step 3: Personal information
-      if (!selectedGender || !dateOfBirth) {
+      if (!selectedGender || !age) {
         return;
       }
-      // Calculate age from date of birth
-      const age = calculateAge(dateOfBirth);
+
+      const ageNumber = parseInt(age);
+
+      // Validate age is reasonable
+      if (isNaN(ageNumber) || ageNumber < 13 || ageNumber > 120) {
+        alert("Please enter a valid age between 13 and 120");
+        return;
+      }
+
       setIsSubmitting(true);
       if (user) {
-        const profileData = { gender: selectedGender, age };
+        const profileData = { gender: selectedGender, age: ageNumber };
         await updateProfile(profileData);
       }
       setIsSubmitting(false);
       setCurrentStep(4);
     } else if (currentStep === 4) {
       // Step 4: Height and weight
-      if (weightUnit === "imperial" && (!currentWeight || !targetWeight)) {
-        return;
+      
+      // Validate weight inputs
+      if (weightUnit === "imperial") {
+        if (!currentWeight || !targetWeight || parseFloat(currentWeight) <= 0 || parseFloat(targetWeight) <= 0) {
+          alert("Please enter valid weight values");
+          return;
+        }
+      } else {
+        if (!currentWeightKg || !targetWeightKg || parseFloat(currentWeightKg) <= 0 || parseFloat(targetWeightKg) <= 0) {
+          alert("Please enter valid weight values");
+          return;
+        }
       }
-      if (weightUnit === "metric" && (!currentWeightKg || !targetWeightKg)) {
-        return;
-      }
-      if (heightUnit === "imperial" && (!heightFeet || !heightInches)) {
-        return;
-      }
-      if (heightUnit === "metric" && !heightCm) {
-        return;
+      
+      // Validate height inputs
+      if (heightUnit === "imperial") {
+        if (!heightFeet || !heightInches || parseFloat(heightFeet) < 0 || parseFloat(heightInches) < 0) {
+          alert("Please enter valid height values");
+          return;
+        }
+      } else {
+        if (!heightCm || parseFloat(heightCm) <= 0) {
+          alert("Please enter a valid height");
+          return;
+        }
       }
       
       // Convert height to cm
@@ -198,24 +202,26 @@ const ProfileSetup = () => {
         currentWeightKgValue = lbsToKg(currentWeight);
         targetWeightKgValue = lbsToKg(targetWeight);
       } else {
-        currentWeightKgValue = parseFloat(currentWeightKg || 0);
-        targetWeightKgValue = parseFloat(targetWeightKg || 0);
+        currentWeightKgValue = parseFloat(currentWeightKg);
+        targetWeightKgValue = parseFloat(targetWeightKg);
       }
 
-      setIsSubmitting(true);
-      // Calculate age from date of birth
-      const age = calculateAge(dateOfBirth);
+      const ageNumber = parseInt(age);
       
-      // Send ALL required fields together to ensure profile is complete
+      setIsSubmitting(true);
+      
+      // Send ALL required fields together - backend will calculate dailyCalorieTarget
       const profileData = {
         height: Math.round(heightInCm),
-        currentWeight: Math.round(currentWeightKgValue * 10) / 10, // Round to 1 decimal
+        currentWeight: Math.round(currentWeightKgValue * 10) / 10,
         targetWeight: Math.round(targetWeightKgValue * 10) / 10,
-        age: age,
+        age: ageNumber,
         gender: selectedGender,
         healthGoal: selectedGoal,
         activityLevel: selectedActivityLevel,
       };
+      
+      console.log('Sending profile data to backend:', profileData);
       
       // For "maintain" goal, mark setup as complete after step 4
       if (selectedGoal === "maintain") {
@@ -248,53 +254,58 @@ const ProfileSetup = () => {
           }
         }
       } catch (error) {
+        console.error("Error saving profile:", error);
+        alert("Failed to save profile. Please try again.");
         setIsSubmitting(false);
       }
     } else if (currentStep === 5) {
-      // Step 5: Weekly goal selection (for lose/gain goals only)
+      // Step 5: Weekly goal selection
       if (!weeklyGoal) {
         return;
       }
       
-      // For "lose" or "gain" goals, save a flag to indicate step 5 is complete
-      // This allows the profile completion check to know step 5 was completed
       setIsSubmitting(true);
       
-      // Save a profileSetupComplete flag to mark that step 5 is done
+      const ageNumber = parseInt(age);
+      
+      let heightInCm;
+      if (heightUnit === "imperial") {
+        heightInCm = feetInchesToCm(heightFeet, heightInches);
+      } else {
+        heightInCm = parseFloat(heightCm);
+      }
+      
+      let currentWeightKgValue, targetWeightKgValue;
+      if (weightUnit === "imperial") {
+        currentWeightKgValue = lbsToKg(currentWeight);
+        targetWeightKgValue = lbsToKg(targetWeight);
+      } else {
+        currentWeightKgValue = parseFloat(currentWeightKg);
+        targetWeightKgValue = parseFloat(targetWeightKg);
+      }
+      
+      const payload = {
+        height: Math.round(heightInCm),
+        currentWeight: Math.round(currentWeightKgValue * 10) / 10,
+        targetWeight: Math.round(targetWeightKgValue * 10) / 10,
+        age: ageNumber,
+        gender: selectedGender,
+        healthGoal: selectedGoal,
+        activityLevel: selectedActivityLevel,
+        weeklyGoal: parseFloat(weeklyGoal),
+        profileSetupComplete: true,
+      };
+      
+      console.log('Sending final profile data to backend:', payload);
+      
       try {
         if (user) {
-          const profileData = { profileSetupComplete: true };
-          await updateProfile(profileData);
+          await updateProfile(payload);
           setIsSubmitting(false);
           setTimeout(() => {
             window.location.replace("/user-dashboard");
           }, 2000);
         } else {
-          const age = calculateAge(dateOfBirth);
-          let heightInCm;
-          if (heightUnit === "imperial") {
-            heightInCm = feetInchesToCm(heightFeet, heightInches);
-          } else {
-            heightInCm = parseFloat(heightCm);
-          }
-          let currentWeightKgValue, targetWeightKgValue;
-          if (weightUnit === "imperial") {
-            currentWeightKgValue = lbsToKg(currentWeight);
-            targetWeightKgValue = lbsToKg(targetWeight);
-          } else {
-            currentWeightKgValue = parseFloat(currentWeightKg || 0);
-            targetWeightKgValue = parseFloat(targetWeightKg || 0);
-          }
-          const payload = {
-            height: Math.round(heightInCm),
-            currentWeight: Math.round(currentWeightKgValue * 10) / 10,
-            targetWeight: Math.round(targetWeightKgValue * 10) / 10,
-            age,
-            gender: selectedGender,
-            healthGoal: selectedGoal,
-            activityLevel: selectedActivityLevel,
-            profileSetupComplete: true,
-          };
           const result = await finalizeRegistration(payload);
           setIsSubmitting(false);
           if (result.success) {
@@ -304,6 +315,8 @@ const ProfileSetup = () => {
           }
         }
       } catch (error) {
+        console.error("Error finalizing registration:", error);
+        alert("Failed to complete setup. Please try again.");
         setIsSubmitting(false);
       }
     }
@@ -323,11 +336,8 @@ const ProfileSetup = () => {
     }
   };
 
-  // Get user's first name or use "there" as fallback
   const userName = user?.name?.split(" ")[0] || "there";
 
-  // Calculate progress percentage
-  // If goal is "maintain", step 5 is skipped, so step 4 is the final step
   const isMaintainGoal = selectedGoal === "maintain";
   const progressPercentage = 
     currentStep === 1 ? 20 : 
@@ -336,7 +346,6 @@ const ProfileSetup = () => {
     currentStep === 4 ? (isMaintainGoal ? 100 : 80) :
     100;
 
-  // Weekly goal options based on health goal
   const getWeeklyGoalOptions = () => {
     if (selectedGoal === "lose") {
       return [
@@ -349,14 +358,12 @@ const ProfileSetup = () => {
         { value: "0.5", label: "Gain 0.5 kilograms per week" },
       ];
     } else {
-      // maintain
       return [
         { value: "0", label: "Maintain current weight (Recommended)", recommended: true },
       ];
     }
   };
 
-  // List of countries (simplified - you can expand this)
   const countries = [
     "Egypt",
     "United States",
@@ -383,9 +390,7 @@ const ProfileSetup = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
       <div className="max-w-2xl w-full">
-        {/* Main Card */}
         <div className="bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden">
-          {/* Progress Bar - Connected to card */}
           <div className="w-full bg-gray-200 h-2">
             <div
               className="bg-[#246608] h-2 transition-all duration-300"
@@ -397,50 +402,44 @@ const ProfileSetup = () => {
             {/* Step 1: Goals Selection */}
             {currentStep === 1 && (
               <>
-                {/* Title */}
                 <h1 className="text-3xl font-bold mb-2 text-gray-900 text-center">
                   Thanks {userName}! Now for your goals.
                 </h1>
 
-                {/* Instructions */}
                 <p className="text-gray-600 mb-8 text-lg text-center">
                   Select up to 3 that are important to you, including one weight goal.
                 </p>
 
-              {/* Goals Selection */}
-              <div className="space-y-3 mb-8">
-                {goals.map((goal) => (
-                  <button
-                    key={goal.id}
-                    type="button"
-                    onClick={() => handleGoalSelect(goal.value)}
-                    className={`w-full py-4 px-6 rounded-lg text-left font-medium text-gray-900 transition-all duration-200 ${
-                      selectedGoal === goal.value
-                        ? "bg-[#246608] text-white shadow-md"
-                        : "bg-white border-2 border-gray-200 hover:border-[#246608]/60 hover:bg-[#246608]/10"
-                    }`}
-                  >
-                    {goal.label}
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
+                <div className="space-y-3 mb-8">
+                  {goals.map((goal) => (
+                    <button
+                      key={goal.id}
+                      type="button"
+                      onClick={() => handleGoalSelect(goal.value)}
+                      className={`w-full py-4 px-6 rounded-lg text-left font-medium text-gray-900 transition-all duration-200 ${
+                        selectedGoal === goal.value
+                          ? "bg-[#246608] text-white shadow-md"
+                          : "bg-white border-2 border-gray-200 hover:border-[#246608]/60 hover:bg-[#246608]/10"
+                      }`}
+                    >
+                      {goal.label}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
 
             {/* Step 2: Activity Level Selection */}
             {currentStep === 2 && (
               <>
-                {/* Title */}
                 <h1 className="text-2xl font-bold mb-2 text-gray-900 text-center">
                   What is your baseline activity level?
                 </h1>
 
-                {/* Subtitle */}
                 <p className="text-gray-500 mb-8 text-base text-center">
                   Not including workouts—we count that separately.
                 </p>
 
-                {/* Activity Level Selection */}
                 <div className="space-y-3 mb-8">
                   {activityLevels.map((level) => (
                     <button
@@ -473,7 +472,7 @@ const ProfileSetup = () => {
             {currentStep === 3 && (
               <>
                 <div className="space-y-6 mb-8">
-                  {/* Sex Selection */}
+                  {/* Gender Selection */}
                   <div>
                     <h2 className="text-lg font-bold mb-4 text-gray-900">
                       What's your gender?
@@ -504,22 +503,25 @@ const ProfileSetup = () => {
                     </div>
                   </div>
 
-                  {/* Date of Birth */}
+                  {/* Age Input */}
                   <div>
                     <h2 className="text-lg font-bold mb-4 text-gray-900">
-                      When were you born?
+                      How old are you?
                     </h2>
                     <div className="relative">
                       <input
-                        type="date"
-                        value={dateOfBirth}
-                        onChange={(e) => setDateOfBirth(e.target.value)}
-                        max={new Date().toISOString().split("T")[0]}
-                        className="w-full py-3 px-4 pr-12 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#246608] focus:border-[#246608]"
-                        placeholder="mm/dd/yyyy"
+                        type="number"
+                        value={age}
+                        onChange={(e) => setAge(e.target.value)}
+                        min="13"
+                        max="120"
+                        className="w-full py-3 px-4 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#246608] focus:border-[#246608]"
+                        placeholder="Enter your age"
                       />
-                      <Calendar className="absolute right-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
                     </div>
+                    <p className="text-sm text-gray-500 mt-2">
+                      You must be at least 13 years old
+                    </p>
                   </div>
 
                   {/* Country Selection */}
@@ -557,7 +559,6 @@ const ProfileSetup = () => {
                     </div>
                   </div>
 
-                  {/* Info Text */}
                   <p className="text-sm text-gray-500">
                     We use this information to calculate an accurate calorie goal for you.
                   </p>
@@ -613,7 +614,6 @@ const ProfileSetup = () => {
                         <button
                           type="button"
                           onClick={() => {
-                            // Convert to cm when switching
                             if (heightFeet && heightInches) {
                               const cm = feetInchesToCm(heightFeet, heightInches);
                               setHeightCm(Math.round(cm).toString());
@@ -643,7 +643,6 @@ const ProfileSetup = () => {
                         <button
                           type="button"
                           onClick={() => {
-                            // Convert to feet/inches when switching
                             if (heightCm) {
                               const { feet, inches } = cmToFeetInches(heightCm);
                               setHeightFeet(feet.toString());
@@ -686,7 +685,6 @@ const ProfileSetup = () => {
                         <button
                           type="button"
                           onClick={() => {
-                            // Convert to kg when switching
                             if (currentWeight) {
                               const kg = lbsToKg(currentWeight);
                               setCurrentWeightKg(Math.round(kg * 10) / 10);
@@ -721,7 +719,6 @@ const ProfileSetup = () => {
                         <button
                           type="button"
                           onClick={() => {
-                            // Convert to lbs when switching
                             if (currentWeightKg) {
                               const lbs = kgToLbs(currentWeightKg);
                               setCurrentWeight(Math.round(lbs * 10) / 10);
@@ -830,7 +827,7 @@ const ProfileSetup = () => {
                 disabled={
                   (currentStep === 1 && !selectedGoal) ||
                   (currentStep === 2 && !selectedActivityLevel) ||
-                  (currentStep === 3 && (!selectedGender || !dateOfBirth)) ||
+                  (currentStep === 3 && (!selectedGender || !age)) ||
                   (currentStep === 4 && 
                     ((weightUnit === "imperial" && (!currentWeight || !targetWeight)) ||
                      (weightUnit === "metric" && (!currentWeightKg || !targetWeightKg)) ||

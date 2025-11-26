@@ -44,9 +44,13 @@ exports.register = async (req, res) => {
       allergies,
     } = req.body;
 
+    // Log incoming registration attempts (avoid logging passwords)
+    console.log(`Register attempt: email=${email}, name=${name}`);
+
     // Validation using utility (declarative approach)
     const requiredValidation = validateRequired(req.body, ["name", "email", "password"]);
     if (!requiredValidation.valid) {
+      console.log('Register validation failed:', requiredValidation.missing);
       return sendError(
         res,
         400,
@@ -68,38 +72,45 @@ exports.register = async (req, res) => {
     // Check if user exists (imperative: async operation)
     const userExists = await User.findOne({ email });
     if (userExists) {
+      console.log(`Register failed: user exists with email=${email}`);
       return sendError(res, 400, "User already exists with this email");
     }
 
     // Calculate daily calorie target using service (declarative composition)
     let dailyCalorieTarget = req.body.dailyCalorieTarget;
     if (!dailyCalorieTarget) {
-      dailyCalorieTarget = calorieService.calculateDailyCalorieTarget({
+      const dailyInput = {
         currentWeight,
         height,
         age,
         gender,
         activityLevel: activityLevel || "moderate",
         healthGoal: healthGoal || "maintain",
-      });
+      };
+      console.log('Calculating dailyCalorieTarget using:', dailyInput);
+      dailyCalorieTarget = calorieService.calculateDailyCalorieTarget(dailyInput);
+      console.log('Calculated dailyCalorieTarget:', dailyCalorieTarget);
     }
 
-    // Create user (imperative: database operation)
-    const user = await User.create({
+    // Ensure numeric fields are numbers (not empty strings) and build payload
+    const toNumberOrUndefined = (v) => (v === undefined || v === null || v === "" ? undefined : Number(v));
+    const userPayload = {
       name,
       email,
       password,
-      age,
+      age: toNumberOrUndefined(age),
       gender,
-      height,
-      currentWeight,
-      targetWeight,
+      height: toNumberOrUndefined(height),
+      currentWeight: toNumberOrUndefined(currentWeight),
+      targetWeight: toNumberOrUndefined(targetWeight),
       healthGoal: healthGoal || "maintain",
       activityLevel: activityLevel || "moderate",
-      dailyCalorieTarget,
+      dailyCalorieTarget: toNumberOrUndefined(dailyCalorieTarget),
       dietaryPreferences: dietaryPreferences || [],
       allergies: allergies || [],
-    });
+    };
+    console.log('Creating user with payload:', userPayload);
+    const user = await User.create(userPayload);
 
     console.log("New user created:", user._id.toString(), user.email);
 
@@ -222,6 +233,31 @@ exports.updateProfile = async (req, res) => {
       return acc;
     }, {});
 
+    // Convert numeric string fields to numbers (or remove if empty)
+    const numericFields = [
+      'age',
+      'height',
+      'currentWeight',
+      'targetWeight',
+      'dailyCalorieTarget'
+    ];
+    numericFields.forEach((f) => {
+      if (updateFields[f] !== undefined) {
+        if (updateFields[f] === "" || updateFields[f] === null) {
+          delete updateFields[f];
+        } else {
+          const num = Number(updateFields[f]);
+          if (!Number.isNaN(num)) {
+            updateFields[f] = num;
+          } else {
+            delete updateFields[f];
+          }
+        }
+      }
+    });
+
+    console.log('Update Profile payload (req.body):', req.body);
+    console.log('Update Profile fields (after coercion):', updateFields);
     // Get current user for recalculation (imperative)
     const currentUser = await User.findById(req.user.id);
     if (!currentUser) {
@@ -249,7 +285,9 @@ exports.updateProfile = async (req, res) => {
       };
 
       // Use service for calculation (declarative)
+      console.log('Recalculating dailyCalorieTarget for update using:', userData);
       const calculatedTarget = calorieService.calculateDailyCalorieTarget(userData);
+      console.log('Calculated target after update:', calculatedTarget);
       if (calculatedTarget) {
         updateFields.dailyCalorieTarget = calculatedTarget;
       }
