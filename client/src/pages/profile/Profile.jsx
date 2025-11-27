@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { userService } from "../../services/userService";
-import { useNavigate } from "react-router-dom";
+import { redirect, useNavigate } from "react-router-dom";
 import { Button } from "../../components/ui/button";
 import { Card, CardContent } from "../../components/ui/card";
 import {
@@ -42,23 +42,22 @@ const Profile = () => {
   };
 
   const handleSave = async () => {
-  try {
-    // Call the userService to update profile
-    await userService.updateProfile(formData);
+    try {
+      // Call the userService to update profile
+      await userService.updateProfile(formData);
 
-    // Show success message
-    alert('Profile updated successfully!');
-    
-    setIsEditing(false);
-    
-    // Reload the page to refresh user data
-    window.location.reload();
+      // Show success message
+      alert("Profile updated successfully!");
 
-  } catch (error) {
-    console.error('Error saving profile:', error);
-    alert('Failed to save profile. Please try again.');
-  }
-};
+      setIsEditing(false);
+
+      // Reload the page to refresh user data
+      window.location.reload();
+    } catch (error) {
+      console.error("Error saving profile:", error);
+      alert("Failed to save profile. Please try again.");
+    }
+  };
 
   const handleCancel = () => {
     setFormData({
@@ -76,6 +75,7 @@ const Profile = () => {
 
   const handleLogout = () => {
     logout();
+    redirect("/dashboard");
   };
 
   return (

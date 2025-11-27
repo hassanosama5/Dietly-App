@@ -35,9 +35,19 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
+
     const result = await login(formData);
-    if (result.success) navigate("/user-dashboard", { replace: true });
-    else setIsSubmitting(false);
+    console.log("LOGIN RESULT:", result); // 🔥 DEBUG HERE
+
+    if (result.success) {
+      if (result.role === "admin") {
+        navigate("/admin-dashboard", { replace: true });
+      } else {
+        navigate("/user-dashboard", { replace: true });
+      }
+    } else {
+      setIsSubmitting(false);
+    }
   };
 
   return (

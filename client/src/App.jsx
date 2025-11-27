@@ -21,13 +21,23 @@ import MealDetailPage from "./pages/MealDetailPage";
 import Progress from "./pages/Progress";
 import MealPlans from "./pages/MealPlans";
 import MealPlanView from "./components/meal-plans/MealPlanView";
-import Chatbot from "./pages/Chatbot"; // Add this import
+import Chatbot from "./pages/Chatbot";
 import LoadingSpinner from "./components/common/LoadingSpinner";
 import DashboardLayout from "./components/layouts/DashboardLayout";
 
-// Route for logged-in users
-const ProtectedRoute = ({ children, allowJustRegistered = false }) => {
-  const { isAuthenticated, loading, justRegistered } = useAuth();
+// Admin pages - ADD THESE IMPORTS
+import DashboardAdmin from "./pages/DashboardAdmin";
+import ManageUsers from "./pages/ManageUsers";
+import ManageMeals from "./pages/ManageMeals";
+
+// Route for logged-in users - UPDATED WITH ROLE CHECKS
+const ProtectedRoute = ({
+  children,
+  allowJustRegistered = false,
+  adminOnly = false,
+  userOnly = false,
+}) => {
+  const { isAuthenticated, loading, justRegistered, user } = useAuth();
 
   if (loading) return <LoadingSpinner />;
 
@@ -36,24 +46,49 @@ const ProtectedRoute = ({ children, allowJustRegistered = false }) => {
     return <Navigate to="/" replace />;
   }
 
+  // If this is the profile-setup route and allowJustRegistered is true, always allow access
+  if (allowJustRegistered) {
+    return children;
+  }
+
+  // Only redirect to profile-setup if user just registered AND this is NOT the profile-setup route
+  if (justRegistered && window.location.pathname !== "/profile-setup") {
+    return <Navigate to="/profile-setup" replace />;
+  }
+
+  // ROLE-BASED ACCESS CONTROL
+  // Admin-only routes - redirect regular users to their dashboard
+  if (adminOnly && user?.role !== "admin") {
+    return <Navigate to="/user-dashboard" replace />;
+  }
+
+  // User-only routes - redirect admins to admin dashboard
+  if (userOnly && user?.role === "admin") {
+    return <Navigate to="/admin-dashboard" replace />;
+  }
+
   return children;
 };
-
-// Route for guests
+// Route for guests - KEEP YOUR EXISTING VERSION BUT ADD ROLE CHECK
 const GuestRoute = ({ children }) => {
-  const { isAuthenticated, loading, justRegistered } = useAuth();
+  const { isAuthenticated, loading, justRegistered, user } = useAuth();
 
   if (loading) return <LoadingSpinner />;
 
   if (isAuthenticated) {
     if (justRegistered) return <Navigate to="/profile-setup" replace />;
+
+    // ADD ROLE-BASED REDIRECTION
+    if (user?.role === "admin") {
+      return <Navigate to="/admin-dashboard" replace />;
+    }
     return <Navigate to="/user-dashboard" replace />;
   }
 
   return children;
 };
 
-// Public route - accessible to both guests and logged-in users
+// Public route - accessible to both guests and logged-in users - KEEP YOUR EXISTING
 const PublicRoute = ({ children }) => {
   const { isAuthenticated, loading, justRegistered } = useAuth();
 
@@ -67,7 +102,7 @@ const PublicRoute = ({ children }) => {
   return children;
 };
 
-// Guest Layout component with navbar
+// Guest Layout component with navbar - KEEP YOUR EXISTING
 const GuestLayout = ({ children }) => {
   const [scrolled, setScrolled] = React.useState(false);
 
@@ -160,7 +195,7 @@ const GuestLayout = ({ children }) => {
   );
 };
 
-// Component to conditionally wrap meals in appropriate layout
+// Component to conditionally wrap meals in appropriate layout - KEEP YOUR EXISTING
 const MealsRoute = () => {
   const { isAuthenticated } = useAuth();
 
@@ -175,7 +210,7 @@ const MealsRoute = () => {
   );
 };
 
-// Component to conditionally wrap meal detail in appropriate layout
+// Component to conditionally wrap meal detail in appropriate layout - KEEP YOUR EXISTING
 const MealDetailRoute = () => {
   const { isAuthenticated } = useAuth();
 
@@ -214,7 +249,7 @@ function App() {
               }
             />
 
-            {/* Profile Setup */}
+            {/* Profile Setup - Allow both users and admins */}
             <Route
               path="/profile-setup"
               element={
@@ -224,7 +259,7 @@ function App() {
               }
             />
 
-            {/* Profile Page */}
+            {/* Profile Page - Allow both users and admins */}
             <Route
               path="/profile"
               element={
@@ -235,7 +270,8 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            {/* Settings Page */}
+
+            {/* Settings Page - Allow both users and admins */}
             <Route
               path="/settings"
               element={
@@ -246,7 +282,8 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            {/* Change Password Page */}
+
+            {/* Change Password Page - Allow both users and admins */}
             <Route
               path="/change-password"
               element={
@@ -257,17 +294,96 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            {/* Chatbot Page - PROTECTED (Logged-in users only) */}
+
+            {/* ========== USER-ONLY ROUTES ========== */}
+            {/* Chatbot Page - USER ONLY (Redirect admins) */}
             <Route
               path="/chatbot"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute userOnly={true}>
                   <DashboardLayout>
                     <Chatbot />
                   </DashboardLayout>
                 </ProtectedRoute>
               }
             />
+
+            {/* User Dashboard - USER ONLY */}
+            <Route
+              path="/user-dashboard"
+              element={
+                <ProtectedRoute userOnly={true}>
+                  <DashboardUser />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Progress - USER ONLY */}
+            <Route
+              path="/progress"
+              element={
+                <ProtectedRoute userOnly={true}>
+                  <DashboardLayout>
+                    <Progress />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Meal Plans - USER ONLY */}
+            <Route
+              path="/meal-plans"
+              element={
+                <ProtectedRoute userOnly={true}>
+                  <DashboardLayout>
+                    <MealPlans />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/meal-plans/view/:id"
+              element={
+                <ProtectedRoute userOnly={true}>
+                  <DashboardLayout>
+                    <MealPlanView />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+
+            {/* ========== ADMIN-ONLY ROUTES ========== */}
+            {/* ADMIN Dashboard - ADMIN ONLY */}
+            <Route
+              path="/admin-dashboard"
+              element={
+                <ProtectedRoute adminOnly={true}>
+                  <DashboardAdmin />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* ADMIN ROUTES - ADMIN ONLY */}
+            <Route
+              path="/admin/users"
+              element={
+                <ProtectedRoute adminOnly={true}>
+                  <ManageUsers />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/admin/meals"
+              element={
+                <ProtectedRoute adminOnly={true}>
+                  <ManageMeals />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* ========== PUBLIC/NEUTRAL ROUTES ========== */}
             {/* Guest Dashboard */}
             <Route
               path="/dashboard"
@@ -278,17 +394,7 @@ function App() {
               }
             />
 
-            {/* Logged-in Dashboard User */}
-            <Route
-              path="/user-dashboard"
-              element={
-                <ProtectedRoute>
-                  <DashboardUser />
-                </ProtectedRoute>
-              }
-            />
-
-            {/* Public Meal Pages - Accessible without authorization */}
+            {/* Public Meal Pages - Accessible to both guests and logged-in users */}
             <Route
               path="/meals"
               element={
@@ -303,38 +409,6 @@ function App() {
                 <PublicRoute>
                   <MealDetailRoute />
                 </PublicRoute>
-              }
-            />
-
-            {/* Other protected pages */}
-            <Route
-              path="/progress"
-              element={
-                <ProtectedRoute>
-                  <DashboardLayout>
-                    <Progress />
-                  </DashboardLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/meal-plans"
-              element={
-                <ProtectedRoute>
-                  <DashboardLayout>
-                    <MealPlans />
-                  </DashboardLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/meal-plans/view/:id"
-              element={
-                <ProtectedRoute>
-                  <DashboardLayout>
-                    <MealPlanView />
-                  </DashboardLayout>
-                </ProtectedRoute>
               }
             />
 

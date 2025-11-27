@@ -11,6 +11,29 @@ export const AuthProvider = ({ children }) => {
   const [justRegistered, setJustRegistered] = useState(false);
   const [pendingRegistration, setPendingRegistration] = useState(null);
 
+  // ADD: Profile completion check for admin routing
+  const checkProfileCompletion = (userData) => {
+    if (!userData) return false;
+
+    const requiredFields = [
+      "age",
+      "gender",
+      "height",
+      "currentWeight",
+      "targetWeight",
+      "healthGoal",
+      "activityLevel",
+    ];
+
+    return requiredFields.every(
+      (field) =>
+        userData[field] !== undefined &&
+        userData[field] !== null &&
+        userData[field] !== "" &&
+        !(typeof userData[field] === "number" && isNaN(userData[field]))
+    );
+  };
+
   // Fetch user on mount if token exists
   const fetchUser = async () => {
     const token = localStorage.getItem("token");
@@ -52,7 +75,7 @@ export const AuthProvider = ({ children }) => {
     return () => window.removeEventListener("storage", handleStorageChange);
   }, []);
 
-  // ADD THIS REGISTER FUNCTION HERE:
+  // Register function - KEEP YOUR EXISTING
   const register = async (userData) => {
     try {
       setError(null);
@@ -107,7 +130,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Login
+  // Login - MODIFY TO RETURN USER ROLE FOR ADMIN ROUTING
   const login = async (credentials) => {
     try {
       setLoading(true);
@@ -121,12 +144,18 @@ export const AuthProvider = ({ children }) => {
         // Fetch full user profile
         const userRes = await authService.getMe();
         if (userRes.data.success) {
-          setUser(userRes.data.data);
-        }
+          const fullUser = userRes.data.data;
+          setUser(fullUser);
 
-        setLoading(false);
-        return { success: true };
+          setLoading(false);
+
+          // ADD: Return role for admin/user routing
+          return { success: true, role: fullUser.role };
+        }
       }
+
+      setLoading(false);
+      return { success: false };
     } catch (err) {
       setLoading(false);
       const msg = err.response?.data?.message || err.message;
@@ -135,13 +164,16 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Update profile
+  // Update profile - KEEP YOUR EXISTING
+  // In your AuthContext, make sure updateProfile clears justRegistered
   const updateProfile = async (profileData) => {
     try {
       const res = await authService.updateProfile(profileData);
       if (res.data.success) {
         const updated = res.data.data;
         setUser(updated);
+        // ADD THIS: Clear justRegistered when profile is updated
+        setJustRegistered(false);
         return { success: true };
       } else {
         setError(res.data.message || "Profile update failed");
@@ -154,7 +186,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Logout
+  // Logout - KEEP YOUR EXISTING
   const logout = async () => {
     try {
       await authService.logout();
@@ -178,8 +210,10 @@ export const AuthProvider = ({ children }) => {
         loading,
         error,
         isAuthenticated: !!user,
+        // ADD: Profile completion for routing
+        isProfileComplete: checkProfileCompletion(user),
         justRegistered,
-        register, // ← ADD THIS LINE
+        register,
         beginRegistration,
         finalizeRegistration,
         login,

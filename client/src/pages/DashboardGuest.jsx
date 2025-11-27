@@ -170,80 +170,74 @@ const DashboardGuest = () => {
       </nav>
 
       {/* ==================== HERO SECTION ==================== */}
-      {/* ==================== HERO SECTION ==================== */}
       <section className="relative pt-32 pb-24">
         <div className="max-w-[1200px] mx-auto px-8">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
-            {/* Left Column - Hero Content */}
-            <div className="space-y-8">
-              <div className="space-y-6">
-                {/* Badge */}
-                <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#246608]/10 border border-[#246608]/20 rounded-full">
-                  <Sparkles className="w-4 h-4 text-[#246608]" />
-                  <span className="text-xs font-semibold text-[#246608] tracking-widest">
-                    AI-POWERED NUTRITION
-                  </span>
-                </div>
-
-                {/* Headline */}
-                <h1 className="text-5xl lg:text-6xl font-bold leading-[1.1] tracking-tight">
-                  THE SMARTER PATH
-                  <br />
-                  TO YOUR
-                  <br />
-                  TARGET WEIGHT
-                </h1>
-
-                {/* Sub-headline */}
-                <p className="text-lg text-gray-400 leading-relaxed max-w-lg">
-                  Dietly AI uses advanced insights to craft perfectly
-                  personalized nutrition plans that evolve with you.
-                </p>
+          <div className="space-y-8 text-center">
+            <div className="space-y-6">
+              {/* Badge */}
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#246608]/10 border border-[#246608]/20 rounded-full mx-auto">
+                <Sparkles className="w-4 h-4 text-[#246608]" />
+                <span className="text-xs font-semibold text-[#246608] tracking-widest">
+                  AI-POWERED NUTRITION
+                </span>
               </div>
 
-              {/* Additional Content */}
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="space-y-2">
-                    <div className="w-12 h-12 bg-[#246608]/10 rounded-full flex items-center justify-center">
-                      <TrendingUp className="w-6 h-6 text-[#246608]" />
-                    </div>
-                    <h3 className="font-semibold text-gray-800">
-                      Personalized Plans
-                    </h3>
-                    <p className="text-sm text-gray-600">
-                      AI-generated meal plans tailored to your goals
-                    </p>
-                  </div>
+              {/* Headline */}
+              <h1 className="text-5xl lg:text-6xl font-bold leading-[1.1] tracking-tight">
+                THE SMARTER PATH
+                <br />
+                TO YOUR
+                <br />
+                TARGET WEIGHT
+              </h1>
 
-                  <div className="space-y-2">
-                    <div className="w-12 h-12 bg-[#246608]/10 rounded-full flex items-center justify-center">
-                      <Users className="w-6 h-6 text-[#246608]" />
-                    </div>
-                    <h3 className="font-semibold text-gray-800">
-                      Expert Guidance
-                    </h3>
-                    <p className="text-sm text-gray-600">
-                      Nutritionist-approved recipes and tips
-                    </p>
-                  </div>
+              {/* Sub-headline */}
+              <p className="text-lg text-gray-600 leading-relaxed max-w-lg mx-auto">
+                Dietly AI uses advanced insights to craft perfectly personalized
+                nutrition plans that evolve with you.
+              </p>
 
-                  <div className="space-y-2">
-                    <div className="w-12 h-12 bg-[#246608]/10 rounded-full flex items-center justify-center">
-                      <Award className="w-6 h-6 text-[#246608]" />
-                    </div>
-                    <h3 className="font-semibold text-gray-800">
-                      Proven Results
-                    </h3>
-                    <p className="text-sm text-gray-600">
-                      Thousands of success stories
-                    </p>
+              {/* Feature Highlights */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-8">
+                <div className="space-y-2">
+                  <div className="w-12 h-12 bg-[#246608]/10 rounded-full flex items-center justify-center mx-auto">
+                    <TrendingUp className="w-6 h-6 text-[#246608]" />
                   </div>
+                  <h3 className="font-semibold text-gray-800">
+                    Personalized Plans
+                  </h3>
+                  <p className="text-sm text-gray-600">
+                    AI-generated meal plans tailored to your goals
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="w-12 h-12 bg-[#246608]/10 rounded-full flex items-center justify-center mx-auto">
+                    <Users className="w-6 h-6 text-[#246608]" />
+                  </div>
+                  <h3 className="font-semibold text-gray-800">
+                    Expert Guidance
+                  </h3>
+                  <p className="text-sm text-gray-600">
+                    Nutritionist-approved recipes and tips
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="w-12 h-12 bg-[#246608]/10 rounded-full flex items-center justify-center mx-auto">
+                    <Award className="w-6 h-6 text-[#246608]" />
+                  </div>
+                  <h3 className="font-semibold text-gray-800">
+                    Proven Results
+                  </h3>
+                  <p className="text-sm text-gray-600">
+                    Thousands of success stories
+                  </p>
                 </div>
               </div>
 
               {/* CTA Buttons */}
-              <div className="flex items-center gap-4 flex-wrap">
+              <div className="flex items-center justify-center gap-4 flex-wrap pt-8">
                 <Button
                   onClick={() => navigate("/register")}
                   size="lg"
@@ -256,9 +250,7 @@ const DashboardGuest = () => {
                 <Button
                   variant="outline"
                   size="lg"
-                  className="px-8 py-6 bg-transparent border-2 border-[#246608]/20 
-             hover:bg-[#246608]/10 transition-all duration-300 text-base 
-             font-semibold text-[#246608]"
+                  className="px-8 py-6 bg-transparent border-2 border-[#246608]/20 hover:bg-[#246608]/10 transition-all duration-300 text-base font-semibold text-[#246608]"
                   onClick={() => {
                     const section = document.getElementById("how");
                     if (section) {
@@ -295,94 +287,65 @@ const DashboardGuest = () => {
               </div>
 
               {/* Trust Indicator */}
-              <div className="pt-4">
+              <div className="pt-8">
                 <p className="text-sm text-gray-500">
                   Trusted by 10,000+ users • 4.9/5 rating • Nutritionist
                   approved
                 </p>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
 
-            {/* Right Column - Success Stories */}
-            <div className="space-y-8">
-              <div className="bg-gradient-to-br from-[#246608] to-[#2F7A0A] rounded-2xl p-8 text-white">
-                <div className="space-y-6">
-                  <div className="text-center">
-                    <div className="text-5xl font-bold text-yellow-300 mb-2">
-                      1000+
-                    </div>
-                    <div className="text-2xl font-semibold">
-                      Success Stories
-                    </div>
-                    <p className="text-white/80 mt-2">
-                      Real people, real results
-                    </p>
+      {/* ==================== SOCIAL PROOF BAR ==================== */}
+      <section className="relative py-12 border-y border-[#246608]/20">
+        <div className="max-w-[1200px] mx-auto px-8">
+          <div className="flex flex-col md:flex-row items-center justify-center gap-12 md:gap-16">
+            {/* Users */}
+            <div className="flex items-center space-x-3">
+              <div className="flex -space-x-2">
+                {[1, 2, 3, 4].map((i) => (
+                  <div
+                    key={i}
+                    className="w-10 h-10 rounded-full bg-[#246608]/80 border-2 border-white flex items-center justify-center"
+                  >
+                    <Users className="w-5 h-5 text-white" />
                   </div>
-
-                  {/* Success Story Cards */}
-                  <div className="space-y-4">
-                    <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm border border-white/20">
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className="w-10 h-10 bg-yellow-300 rounded-full flex items-center justify-center">
-                          <span className="text-[#246608] font-bold">S</span>
-                        </div>
-                        <div>
-                          <div className="font-semibold">Sarah M.</div>
-                          <div className="text-white/70 text-sm">
-                            Lost 15kg in 3 months
-                          </div>
-                        </div>
-                      </div>
-                      <p className="text-white/90 text-sm italic">
-                        "The personalized meal plans made weight loss so much
-                        easier. I never felt deprived!"
-                      </p>
-                    </div>
-
-                    <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm border border-white/20">
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className="w-10 h-10 bg-yellow-300 rounded-full flex items-center justify-center">
-                          <span className="text-[#246608] font-bold">J</span>
-                        </div>
-                        <div>
-                          <div className="font-semibold">James T.</div>
-                          <div className="text-white/70 text-sm">
-                            Gained 8kg muscle
-                          </div>
-                        </div>
-                      </div>
-                      <p className="text-white/90 text-sm italic">
-                        "Finally found a meal plan that actually helped me build
-                        muscle without guesswork."
-                      </p>
-                    </div>
-
-                    <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm border border-white/20">
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className="w-10 h-10 bg-yellow-300 rounded-full flex items-center justify-center">
-                          <span className="text-[#246608] font-bold">M</span>
-                        </div>
-                        <div>
-                          <div className="font-semibold">Maria L.</div>
-                          <div className="text-white/70 text-sm">
-                            Maintained for 1+ year
-                          </div>
-                        </div>
-                      </div>
-                      <p className="text-white/90 text-sm italic">
-                        "The ongoing support and recipe variety helped me
-                        maintain my goal weight effortlessly."
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="text-center pt-4 border-t border-white/20">
-                    <p className="text-sm text-white/80">
-                      Join our community of success stories today
-                    </p>
-                  </div>
-                </div>
+                ))}
               </div>
+              <span className="text-sm text-gray-600 font-medium">
+                10K+ Active Users
+              </span>
+            </div>
+
+            {/* Divider */}
+            <div className="hidden md:block w-px h-8 bg-[#246608]/20"></div>
+
+            {/* Rating */}
+            <div className="flex items-center space-x-3">
+              <div className="flex gap-1">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <Star
+                    key={i}
+                    className="w-5 h-5 fill-yellow-400 text-yellow-400"
+                  />
+                ))}
+              </div>
+              <span className="text-sm text-gray-600 font-medium">
+                4.9 Rating
+              </span>
+            </div>
+
+            {/* Divider */}
+            <div className="hidden md:block w-px h-8 bg-[#246608]/20"></div>
+
+            {/* Personalized */}
+            <div className="flex items-center space-x-2">
+              <Award className="w-5 h-5 text-[#246608]" />
+              <span className="text-sm text-gray-600 font-medium">
+                Fully Personalized
+              </span>
             </div>
           </div>
         </div>
@@ -646,54 +609,81 @@ const DashboardGuest = () => {
         </div>
       </section>
 
-      {/* ==================== SOCIAL PROOF BAR ==================== */}
-      <section className="relative py-12 border-y border-[#246608]/20">
+      {/* ==================== SUCCESS STORIES ==================== */}
+      <section className="relative py-20 bg-white">
         <div className="max-w-[1200px] mx-auto px-8">
-          <div className="flex flex-col md:flex-row items-center justify-center gap-12 md:gap-16">
-            {/* Users */}
-            <div className="flex items-center space-x-3">
-              <div className="flex -space-x-2">
-                {[1, 2, 3, 4].map((i) => (
-                  <div
-                    key={i}
-                    className="w-10 h-10 rounded-full bg-[#246608]/80 border-2 border-white flex items-center justify-center"
-                  >
-                    <Users className="w-5 h-5 text-white" />
+          <div className="bg-gradient-to-br from-[#246608] to-[#2F7A0A] rounded-2xl p-8 text-white">
+            <div className="space-y-6">
+              <div className="text-center">
+                <div className="text-5xl font-bold text-yellow-300 mb-2">
+                  1000+
+                </div>
+                <div className="text-2xl font-semibold">Success Stories</div>
+                <p className="text-white/80 mt-2">Real people, real results</p>
+              </div>
+
+              {/* Success Story Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm border border-white/20">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 bg-yellow-300 rounded-full flex items-center justify-center">
+                      <span className="text-[#246608] font-bold">S</span>
+                    </div>
+                    <div>
+                      <div className="font-semibold">Sarah M.</div>
+                      <div className="text-white/70 text-sm">
+                        Lost 15kg in 3 months
+                      </div>
+                    </div>
                   </div>
-                ))}
+                  <p className="text-white/90 text-sm italic">
+                    "The personalized meal plans made weight loss so much
+                    easier. I never felt deprived!"
+                  </p>
+                </div>
+
+                <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm border border-white/20">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 bg-yellow-300 rounded-full flex items-center justify-center">
+                      <span className="text-[#246608] font-bold">J</span>
+                    </div>
+                    <div>
+                      <div className="font-semibold">James T.</div>
+                      <div className="text-white/70 text-sm">
+                        Gained 8kg muscle
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-white/90 text-sm italic">
+                    "Finally found a meal plan that actually helped me build
+                    muscle without guesswork."
+                  </p>
+                </div>
+
+                <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm border border-white/20">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 bg-yellow-300 rounded-full flex items-center justify-center">
+                      <span className="text-[#246608] font-bold">M</span>
+                    </div>
+                    <div>
+                      <div className="font-semibold">Maria L.</div>
+                      <div className="text-white/70 text-sm">
+                        Maintained for 1+ year
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-white/90 text-sm italic">
+                    "The ongoing support and recipe variety helped me maintain
+                    my goal weight effortlessly."
+                  </p>
+                </div>
               </div>
-              <span className="text-sm text-gray-400 font-medium">
-                10K+ Active Users
-              </span>
-            </div>
 
-            {/* Divider */}
-            <div className="hidden md:block w-px h-8 bg-[#246608]/20"></div>
-
-            {/* Rating */}
-            <div className="flex items-center space-x-3">
-              <div className="flex gap-1">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <Star
-                    key={i}
-                    className="w-5 h-5 fill-yellow-400 text-yellow-400"
-                  />
-                ))}
+              <div className="text-center pt-4 border-t border-white/20">
+                <p className="text-sm text-white/80">
+                  Join our community of success stories today
+                </p>
               </div>
-              <span className="text-sm text-gray-400 font-medium">
-                4.9 Rating
-              </span>
-            </div>
-
-            {/* Divider */}
-            <div className="hidden md:block w-px h-8 bg-[#246608]/20"></div>
-
-            {/* Personalized */}
-            <div className="flex items-center space-x-2">
-              <Award className="w-5 h-5 text-[#246608]" />
-              <span className="text-sm text-gray-400 font-medium">
-                Fully Personalized
-              </span>
             </div>
           </div>
         </div>
@@ -746,7 +736,7 @@ const DashboardGuest = () => {
             <h2 className="text-4xl font-bold mb-8">Built on Expertise</h2>
 
             {/* Trust Indicators */}
-            <div className="flex flex-wrap items-center justify-center gap-6 text-gray-400">
+            <div className="flex flex-wrap items-center justify-center gap-6 text-gray-600">
               <span className="flex items-center space-x-2">
                 <Stethoscope className="w-6 h-6 text-[#246608]" />
                 <span className="text-sm font-medium">
@@ -754,21 +744,21 @@ const DashboardGuest = () => {
                 </span>
               </span>
 
-              <span className="text-gray-600">•</span>
+              <span className="text-gray-400">•</span>
 
               <span className="flex items-center space-x-2">
                 <Microscope className="w-6 h-6 text-[#246608]" />
                 <span className="text-sm font-medium">AI Research Lab</span>
               </span>
 
-              <span className="text-gray-600">•</span>
+              <span className="text-gray-400">•</span>
 
               <span className="flex items-center space-x-2">
                 <CheckCircle className="w-6 h-6 text-[#246608]" />
                 <span className="text-sm font-medium">Clinical Validation</span>
               </span>
 
-              <span className="text-gray-600">•</span>
+              <span className="text-gray-400">•</span>
 
               <span className="flex items-center space-x-2">
                 <Shield className="w-6 h-6 text-[#246608]" />
@@ -787,14 +777,14 @@ const DashboardGuest = () => {
             <br />
             Your Health?
           </h2>
-          <p className="text-lg text-gray-400 mb-10">
+          <p className="text-lg text-gray-600 mb-10">
             Join thousands who've discovered the smarter path to sustainable
             nutrition with Dietly AI.
           </p>
           <Button
             onClick={() => navigate("/register")}
             size="lg"
-            className="px-12 py-7 bg-[#246608] hover:opacity-80 transition-all duration-300 text-lg font-bold"
+            className="px-12 py-7 bg-[#246608] hover:bg-[#1a4a06] transition-all duration-300 text-lg font-bold"
           >
             <TrendingUp className="w-6 h-6 mr-2" />
             GET STARTED FREE
